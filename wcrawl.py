@@ -96,8 +96,9 @@ def main():
     valid_urls = list(filter(None, valid_urls_unfiltered))
     print("Done, Writing to Disk")
     with open(r"C:/Users/ooora/Desktop/Crawled_Urls.txt", "a") as text_file:
-        text_file.write("{} - Connected Sites Found".format(len(valid_urls)))
-        text_file.writelines(valid_urls)
+        text_file.write("{} - Connected Sites Found\n".format(len(valid_urls)))
+        for line in valid_urls:
+            text_file.write(line + "\n")
 
 
 if __name__ == "__main__":
