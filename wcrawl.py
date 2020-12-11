@@ -3,17 +3,18 @@ import re
 import tldextract
 from tqdm import tqdm
 from multiprocessing import Pool
+import subprocess
 import os
 
 
 # Config
-ROOT_DOMAIN = "https://www.google.com"
+ROOT_DOMAIN = "https://www.wikipedia.org/"
 
 
 def find(string):
     # findall() has been used
     # with valid conditions for urls in string
-    url = re.findall("https://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", string)
+    url = re.findall("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", string)
     return url
 
 
@@ -27,6 +28,7 @@ def get_content(url):
     try:
         return str(requests.get(url).content)
     except Exception:
+
         return ""
 
 
@@ -55,29 +57,11 @@ def regular_parser(url_list):
     return url_output_list
 
 
-def final_url_validator(url_list):
-    final_url_list = []
-    for url in tqdm(url_list):
-        try:
-            if requests.head(url).ok:
-                final_url_list.append(url)
-        except Exception:
-            pass
-    return final_url_list
-
-
-def final_url_validator_str(url_str):
-    try:
-        status = requests.head(url_str).ok
-        return url_str
-    except Exception:
-        return None
-
-
 def check_ping(url_str):
     hostname = url_str[8:]
-    response = os.system("ping -n 1 " + hostname)
-    if response == 0:
+    status = subprocess.call(
+        ['ping', '-n', '1', hostname], stdout=open(os.devnull, 'wb'))
+    if status == 0:
         return url_str
     else:
         return None
@@ -95,6 +79,8 @@ def main():
         valid_urls_unfiltered = pool.map(check_ping, depth2)
     valid_urls = list(filter(None, valid_urls_unfiltered))
     print("Done, Writing to Disk")
+    with open(r"C:/Users/ooora/Desktop/Crawled_Urls.txt", "w") as text_file:
+        text_file.write("")
     with open(r"C:/Users/ooora/Desktop/Crawled_Urls.txt", "a") as text_file:
         text_file.write("{} - Connected Sites Found\n".format(len(valid_urls)))
         for line in valid_urls:
