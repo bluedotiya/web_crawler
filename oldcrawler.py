@@ -15,7 +15,7 @@ WELL_KNOWN = ["google", "amazon", "facebook", "youtube", "twitter", "linkedin", 
 def find(string):
     # findall() has been used
     # with valid conditions for urls in string
-    urls = re.findall("http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", string)
+    urls = re.findall("(?P<url>https?://[^/]+)", string)
     return urls
 
 
@@ -41,7 +41,7 @@ def is_known(url_arg):
 
 def regular_crawler(url_list):
     url_output_list = []
-    print("Crawl Website Count: {} ".format(url_list.__len__()))
+    print(f"Crawl Website Count: {url_list.__len__()}")
     for url in url_list:
         respond = get_content(url)
         parsed_respond = find(respond)
@@ -95,7 +95,9 @@ def crawl_depth(int_depth):
 
 
 def main():
-    final_url_list = crawl_depth(1)
+    start_time = time.time()
+    final_url_list = crawl_depth(2)
+    print("--- %s seconds ---" % (time.time() - start_time))
     print("Validating URLS....")
     with Pool(10) as pool:
         valid_urls_unfiltered = pool.map(check_ping, final_url_list)
