@@ -28,7 +28,7 @@ def depth_cycle(depth, root_url):
 def rtb_cycle(url, depth=1):
     html = Requester(f"{url}").request()
     url_list = Parser(html).extract()
-    buffer = Buffer(url_list, f"./depth{depth}.tmp")
+    buffer = Buffer(url_list, f"./depth{depth}.tmp")  #TODO: Fix the buffer so it can split tmp files into bit chunks so python wont crash :)
     buffer.save()
 
 
