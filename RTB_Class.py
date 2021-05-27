@@ -37,7 +37,7 @@ class Buffer:
         self.file_path = file_path
 
     def __str__(self):
-        return "This Class Gets a HTML Content(String) and Saves it on Storage"
+        return "This Class Gets a URL (String) and Saves it on Storage"
 
     def save(self):
         try:
