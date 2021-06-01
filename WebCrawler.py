@@ -81,7 +81,7 @@ def cycle_stats(depth, start_time_point):
 
 
 def main():
-    runtime_cycle(3, "https://www.youtube.com")
+    runtime_cycle(3, "")
 
 
 if __name__ == "__main__":
