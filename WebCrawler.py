@@ -1,4 +1,4 @@
-from RTB_Class import Requester, Parser, Buffer
+import RTB
 import os
 
 
@@ -27,15 +27,14 @@ def depth_cycle(depth, root_url):
 
 
 def rtb_cycle(depth=1, url="https://www.google.com/", url_list_counter=1):
-    response_tuple = Requester(f"{url}").request()
+    response_tuple = RTB.request(url)
     html_content, time_elapsed = response_tuple
-    url_list = Parser(html_content).extract()
-    buffer = Buffer(url, url_list, depth, time_elapsed, url_list_counter)
-    buffer.save()
+    url_list = RTB.extract(html_content)
+    RTB.save(url, url_list, depth, time_elapsed, url_list_counter)
 
 
 def main():
-    depth_cycle(3, "https://www.google.com/search?q=random&sxsrf=ALeKk02dTZ6AmqHNAEcYzyhdVVpyoUi1Mg%3A1622768275768&source=hp&ei=k3q5YP2vLKaN9u8P4suciAo&iflsig=AINFCbYAAAAAYLmIo9YtRtSo9ycAJGcQK1gA2c74XNjc&oq=random&gs_lcp=Cgdnd3Mtd2l6EAMyBQgAEMsBMgQIABBDMgUIABDLATIFCAAQywEyBQgAEMsBMgUIABDLATIFCAAQywEyBQgAEMsBMgUIABDLATIFCAAQywE6BAgjECc6CAguELEDEIMBOgUIABCxAzoICAAQsQMQgwE6CQgAELEDEAoQAToCCAA6BggjECcQEzoFCC4QsQM6CwgAELEDEMcBEKMCOgIILlD7FFjjG2ChHWgAcAB4AIABvwGIAZYIkgEDMC42mAEAoAEBqgEHZ3dzLXdpeg&sclient=gws-wiz&ved=0ahUKEwi9xYL14vzwAhWmhv0HHeIlB6EQ4dUDCAY&uact=5")
+    depth_cycle(3, "https://www.spotify.com")
 
 
 if __name__ == "__main__":

@@ -9,8 +9,8 @@ for num in range(1, 4):
             else:
                 parent_url = os.walk(f"./Depth{num}/{parent}").__next__()[2][0]
             with open(f"./Depth{num}/{parent}/{parent_url}", 'r') as parent_file:
-                sub_domain = ''
-                sub_domain_sum = 0
+                domain = ''
+                domain_sum = 0
                 theta_angle = 0
                 domain_name = ''
                 top_level_domain = ''
@@ -25,12 +25,12 @@ for num in range(1, 4):
                 splited = url.split('.')
                 if splited.__len__() == 3:
                     sub_domain, domain_name, top_level_domain = splited
-                    for char in sub_domain:
-                        sub_domain_sum += ord(char)
-                    theta_angle = sub_domain_sum % 360
+                    for char in f"{domain_name}.{top_level_domain}":
+                        domain_sum += ord(char)
+                    theta_angle = domain_sum % 360
                     x_pos = math.sin(math.radians(90 - theta_angle)) * float(vector_length)
                     y_pos = math.sin(math.radians(theta_angle)) * float(vector_length)
-                    if 0 <= theta_angle <= 90:
+                    if True or 0 <= theta_angle <= 90:
                         node_pose = f"{x_pos}:{y_pos}"
                     elif 90 < theta_angle <= 180:
                         node_pose = f"{-1.0 * x_pos}:{y_pos}"
