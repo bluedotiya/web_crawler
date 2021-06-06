@@ -28,10 +28,7 @@ def depth_cycle(depth, root_url):
 
 def rtb_cycle(depth=1, url="https://www.google.com/", url_list_counter=1):
     response_tuple = Requester(f"{url}").request()
-    if type(response_tuple) == tuple:
-        html_content, time_elapsed = response_tuple
-    else:
-        html_content, time_elapsed = '', ''
+    html_content, time_elapsed = response_tuple
     url_list = Parser(html_content).extract()
     buffer = Buffer(url, url_list, depth, time_elapsed, url_list_counter)
     buffer.save()
