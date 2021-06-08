@@ -1,6 +1,7 @@
 import requests
 import re
 import os
+import datetime
 
 
 def request(url):
@@ -26,13 +27,14 @@ def request(url):
         ('', '')
 
     """
-    request = requests.get(url, timeout=3)
-    html_content = request.content
-    elapsed = request.elapsed
-    if request.status_code == 200:
-        return str(html_content), elapsed
-    else:
+    try:
+        response = requests.get(url, timeout=1)
+    except:
         return '', ''
+    else:
+        html_content = response.content
+        elapsed = response.elapsed
+        return str(html_content), elapsed
 
 
 def extract(html_content):
@@ -46,7 +48,7 @@ def extract(html_content):
     return re.findall("(https?://[\w\-.]+)", html_content)
 
 
-def save(parent_url, url_list, depth_num, time_elapsed, url_counter):
+def save(parent_url, url_list, depth_num, time_elapsed, url_counter, parent_file_pointer):
     """
        This function handles the writing, saving and organizing of the Web Crawler Operation.
 
@@ -54,10 +56,11 @@ def save(parent_url, url_list, depth_num, time_elapsed, url_counter):
        Parent URL and Child URL list, the save function is the lower-end of the DB Operation, this means it need
        higher external function in order to work, such function is the depth_cycle
 
-       Depth: represent how deep the crawler will search after the original website provided. Parent Folder: Each
-       parent folder represent a URL that was found from the previous depth. Parent URL: Represent the URL that
-       was crawled I.E: http://www.example.com/ and the request time that URL took (MS). Child URL's: Represent
-       all the extracted URL's from the Parent URL Request
+       Depth: represent how deep the crawler will search after the original website provided.
+       Parent Folder: Each parent folder represent a URL that was found from the previous depth.
+       Parent URL: Represent the URL that was crawled I.E: http://www.example.com/
+       and the request time that URL took (MS).
+       Child URL's: Represent all the extracted URL's from the Parent URL Request
 
        Data Order:
        Depth -> Parent Folder -> Parent_URL.txt, Child_URL's.txt
@@ -76,13 +79,19 @@ def save(parent_url, url_list, depth_num, time_elapsed, url_counter):
 
     try:
         os.mkdir(f"Depth{depth_num}/Parent{url_counter}")
-        with open(f"Depth{depth_num}/Parent{url_counter}"
-                  f"/Parent_Url_{url_counter}.txt", "a") as parent_file:
+        with open(f"Depth{depth_num}/Parent{url_counter}/Parent_Url_{url_counter}.txt", "a") as parent_file:
             parent_file.write(f"{parent_url}\n")
-            parent_file.write(str(time_elapsed.microseconds / 1000 / 2))
-        with open(f"Depth{depth_num}/Parent{url_counter}"
-                  f"/Child_Urls_{url_counter}.txt", "a") as buffer_file:
-            for url in set(url_list):
-                buffer_file.writelines(f"{url}\n")
-    except:
-        pass
+            parent_file.write(f"{parent_file_pointer}\n")
+            if type(time_elapsed) is datetime.timedelta:
+                parent_file.write(str(time_elapsed.microseconds / 1000 / 2))
+            else:
+                parent_file.write("FAIL")
+        with open(f"Depth{depth_num}/Parent{url_counter}/Child_Urls_{url_counter}.txt", "a") as buffer_file:
+            if len(url_list) == 0:
+                buffer_file.writelines(f"No URL's found")
+            else:
+                for url in set(url_list):
+                    buffer_file.writelines(f"{url}\n")
+    except BaseException:
+        exit(404)
+
