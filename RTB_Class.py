@@ -1,56 +1,49 @@
 import requests
 import re
 import os
+import datetime
 
 
-class Requester:
-    def __init__(self, url):
-        self.url = url
+def request(url):
+    """
+    Takes a URL and return its website html content
+    This function send a GET request to a given url, receives the response, return the raw HTML Data and the
+    time the request has taken.
+    The function checks whether the request succeeded or failed
+    Args:
+        url (str): The received website address
+    Returns:
+        A Tuple containing the raw HTML data and the time the request took.
+        first member of the tuple will be string and the second a datetime.timedelta object.
+        if the request fails returns a tuple with two members containing empty string.
+        Successful request:
+        (str, timedelta)
+        Failed request:
+        ('', '')
+    """
+    try:
+        response = requests.get(url, timeout=1)
+    except:
+        return '', ''
+    else:
+        html_content = response.content
+        elapsed = response.elapsed
+        return str(html_content), elapsed
 
-    def __str__(self):
-        return "This Class Gets a URL (String) and Returns its HTML Content"
 
-    def request(self):
-        try:
-            return str(requests.get(self.url).content)
-        except:
-            pass
-
-
-class Parser:
-    def __init__(self, html_content):
-        self.html_content = html_content
-
-    def __str__(self):
-        return "This Class Gets a HTML Content(String) and Extracts URLS from it"
-
-    def extract(self):
-        try:
-            return re.findall("(https?://[\w\-\.]+)", self.html_content)
-        except:
-            pass
+def extract(html_content):
+    """
+    This function job is takes raw HTML Data and extracts URL's from it by using regex.
+    Extracts from the Raw HTML a list of URL's, output will always be a list.
+    Returns:
+        A List containing the URL's extracted from the Raw HTML Data
+    """
+    return re.findall("(https?://[\w\-.]+)", html_content)
 
 
-class Buffer:
-    def __init__(self, html_content, file_path):
-        self.html_content = html_content
-        self.file_path = file_path
+def main():
+    pass
 
-    def __str__(self):
-        return "This Class Gets a URL (List) and Saves it on Storage"
 
-    def save(self):
-        try:
-            with open(self.file_path, "a") as buffer_file:
-                for url in set(self.html_content):
-                    buffer_file.writelines(f"{url}\n")
-        except:
-            pass
-
-    def read(self):
-        with open(self.file_path, "r") as buffer_file:
-            file_content = buffer_file.readlines()
-            return file_content
-
-    def del_buffer(self):
-        os.remove(self.file_path)
+if __name__ == "__main__":
+    main()
