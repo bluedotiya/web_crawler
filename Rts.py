@@ -34,12 +34,13 @@ def request(url):
 def extract(html_content):
     """
     This function job is takes raw HTML Data and extracts URL's from it by using regex.
-    Extracts from the Raw HTML a list of URL's, output will always be a list.
+    Extracts from the Raw HTML a list of URL's, and extracts it to a dict, output will always be a dict.
     Returns:
-        A List containing the URL's extracted from the Raw HTML Data
+        A dict containing the URL's extracted from the Raw HTML Data
     """
-    return re.findall("(https?://[\w\-.]+)", html_content)
-
+    found_list = re.findall("(https?://[\w\-.]+)", html_content)
+    response_dict = {'urls': found_list}
+    return response_dict
 
 def main():
     pass
