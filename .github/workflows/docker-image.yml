@@ -16,3 +16,5 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build feeder-app/docker --file feeder-app/docker/Dockerfile --tag feeder-app:$(date +%s)
+    - name: Docker Push the Image
+      run: docker push bluedotiya/feeder-app:$(date +%s)

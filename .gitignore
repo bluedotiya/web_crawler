@@ -1,0 +1,10 @@
+.vscode/settings.json
+/shelf/
+/workspace.xml
+.pytest*
+.vscode
+__pycache__
+tests/
+*test*.py
+.idea/
+*dev*
