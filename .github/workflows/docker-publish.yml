@@ -2,6 +2,9 @@ name: Build & publish containers
 on:
   release:
     types: [published]
+on:
+  push:
+    branches: [ "microservice" ]
 
 env:
   REGISTRY: ghcr.io
