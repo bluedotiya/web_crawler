@@ -5,6 +5,5 @@
 .vscode
 __pycache__
 tests/
-feeder_test.py
 .idea/
 *dev*
