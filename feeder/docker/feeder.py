@@ -109,10 +109,8 @@ if REDIS_ENV:
         # Assign html content, request time to vars & Extracting urls from html content
         request_html, request_time = request_obj
         extracted_urls = extract_page_data(request_html)
-        for url in extracted_urls:
-            redis_inset_status = redis_obj.sadd(root_url, url)
-            if redis_inset_status != 1:
-                return Response("{'Error':'Failed to start Job on the requested URL, Sorry :('}", status=500, mimetype='application/json')
+        for url in extracted_urls['urls']:
+            redis_obj.sadd(root_url, str(url))
 
         # Send Successful Job status to Client
         client_answer = json.dumps({'Success':'Job started'}), "200"
