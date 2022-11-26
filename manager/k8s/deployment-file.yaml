@@ -18,6 +18,6 @@ spec:
     spec:
       containers:
         - name: manager
-          image: manager:dev
+          image: ghcr.io/bluedotiya/web_crawler/manager:microservice
           ports:
             - containerPort: 80

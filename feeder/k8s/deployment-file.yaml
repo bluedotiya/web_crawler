@@ -18,6 +18,6 @@ spec:
     spec:
       containers:
         - name: feeder
-          image: ghcr.io/bluedotiya/web_crawler:microservice
+          image: ghcr.io/bluedotiya/web_crawler/feeder:microservice
           ports:
             - containerPort: 80
