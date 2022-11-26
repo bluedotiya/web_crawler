@@ -1,10 +1,8 @@
 import requests
 
-MANAGER_DNS_NAME = "localhost"
-
 def send_data(user_input):
     print(f"{8*'='}REQUEST STARTED{8*'='}")
-    res = requests.post(f"http://{MANAGER_DNS_NAME}", json=user_input)
+    res = requests.post('http://localhost', json=user_input)
     print(f"==Client==:{res.request.body}")
     print(f"==Client==:{res.status_code}")
     print(f"==Client==:{res._content}")
@@ -22,7 +20,7 @@ def main():
     send_data({"url":["http://idontexist.wtfthesafda", "http://idontexist.wtfthesafda"]})
     # Send bad type 
     send_data(1)
-    
+
     
 if __name__ == '__main__':
     main()
