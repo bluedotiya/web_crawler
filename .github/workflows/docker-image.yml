@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "microservice" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "microservice" ]
 
 jobs:
 
@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+      run: docker build feeder-app/docker --file feeder-app/docker/Dockerfile --tag feeder-app:$(date +%s)
