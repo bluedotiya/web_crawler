@@ -58,7 +58,6 @@ def check_redis_for_jobs(redis_connection_object):
             return True, key.decode('utf-8')
     return False, None
     
-
 def feeding(key, redis_connection_object):
     url_list = redis_connection_object.smembers(key)
     for master_url in url_list.decode('utf-8'):
@@ -95,7 +94,6 @@ def feeding(key, redis_connection_object):
         for child_url in extracted_urls:
             normalized_child_url = ('.'.join((child_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
             redis_connection_object.sadd(f"{normalized_child_url}_{curr_depth}_{req_depth}_1")
-
 
 
 def main():

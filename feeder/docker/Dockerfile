@@ -6,4 +6,4 @@ ENV FLASK_APP=/app/feeder.py
 ADD ./feeder/docker/feeder.py /app/feeder.py
 ADD ./feeder/docker/feeder_test.py /app/feeder_test.py
 
-ENTRYPOINT ["/usr/local/bin/flask", "run", "--host=0.0.0.0", "--port=80"]
+ENTRYPOINT ["/usr/local/bin/python3", "/app/feeder.py"]
