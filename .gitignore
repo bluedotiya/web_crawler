@@ -5,6 +5,6 @@
 .vscode
 __pycache__
 tests/
-*test*.py
+feeder_test.py
 .idea/
 *dev*
