@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feeder-app
+  labels:
+    app: feeder-app
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: feeder-app
+      tier: backend
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: feeder-app
+        tier: backend
+        track: stable
+    spec:
+      nodeSelector:
+        type: backend
+      containers:
+        - name: feeder-app
+          image: feeder-app:dev
+          ports:
+            - containerPort: 80
