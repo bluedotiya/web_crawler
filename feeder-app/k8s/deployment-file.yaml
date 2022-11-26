@@ -1,27 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: feeder-app
+  name: feeder
   labels:
-    app: feeder-app
+    app: feeder
 spec:
   replicas: 5
   selector:
     matchLabels:
-      app: feeder-app
-      tier: backend
+      app: feeder
       track: stable
   template:
     metadata:
       labels:
-        app: feeder-app
-        tier: backend
+        app: feeder
         track: stable
     spec:
-      nodeSelector:
-        type: backend
       containers:
-        - name: feeder-app
+        - name: feeder
           image: ghcr.io/bluedotiya/web_crawler:microservice
           ports:
             - containerPort: 80
