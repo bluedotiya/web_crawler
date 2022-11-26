@@ -16,10 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: feeder/Dockerfile
+          - dockerfile: feeder/docker/Dockerfile
             image: ghcr.io/web_crawler/feeder
-          - dockerfile: manager/Dockerfile
+          - dockerfile: manager/docker/Dockerfile
             image: ghcr.io/web_crawler/manager
+          - dockerfile: feeder_standalone/docker/Dockerfile
+            image: ghcr.io/web_crawler/feeder_standalone
     permissions:
       contents: read
       packages: write
