@@ -47,7 +47,7 @@ def extract_page_data(html_content):
     return found_list
 
 def random_sleep():
-    time.sleep((random.randrange(20,100,1)) / 100)
+    time.sleep((random.randrange(1,10,1)))
 
 def check_redis_for_jobs(redis_connection_object):
     available_keys = redis_connection_object.keys('*')
