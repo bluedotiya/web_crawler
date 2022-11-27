@@ -84,14 +84,21 @@ def feeding(key, redis_connection_object):
         if curr_depth_indicator == "ROOT":
             curr_depth = 1
         else:
-            curr_depth = curr_depth_indicator + 1
+            curr_depth = str(int(curr_depth_indicator) + 1)
 
         # Printing depths
         print(f"Current Depth is: {curr_depth}")
         print(f"Requested Depth is: {req_depth}")
 
         # Normalized master URL
-        normalized_master_url = ('.'.join((master_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
+        normalized_master_url = ''
+        master_url_list = (master_url.replace('https://', '')).replace('http://', '').split('.')
+        if master_url_list.__len__() == 2:
+            normalized_master_url = '.'.join(master_url_list)
+        if master_url_list.__len__() == 3:
+            normalized_master_url = ('.'.join(master_url_list[-1:-3:-1][-1:-3:-1])).upper()
+        else:
+            normalized_master_url = ('.'.join(master_url_list[-1:-4:-1][-1:-4:-1])).upper()
         print(f"Normalized Master URL is: {normalized_master_url}")
 
         # Check if processed set exist
@@ -101,8 +108,8 @@ def feeding(key, redis_connection_object):
 
         # Create new set, insert urls
         for child_url in extracted_urls:
-            redis_connection_object.sadd(f"{master_url}_{curr_depth}_{req_depth}_0", child_url)
-            
+            redis_connection_object.sadd(f"{normalized_master_url}_{curr_depth}_{req_depth}_0", child_url)
+
     # Change key job status to processed
     key_comp_list[-1] = '1'
     processed_key = '_'.join(key_comp_list)
