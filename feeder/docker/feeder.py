@@ -60,7 +60,10 @@ def check_redis_for_jobs(redis_connection_object):
     
 def feeding(key, redis_connection_object):
     normalized_master_url = ''
-    url_set = redis_connection_object.smembers(key)
+    try:
+        url_set = redis_connection_object.smembers(key)
+    except:
+        return 1
     for encoded_master_url in url_set:
         master_url = encoded_master_url.decode('utf-8')
         request_obj = get_page_data(master_url)[0]
@@ -102,19 +105,30 @@ def feeding(key, redis_connection_object):
         print(f"Normalized Master URL is: {normalized_master_url}")
 
         # Check if processed set exist
-        if redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*") != 0:
+        try:
+            check_set_exist = redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*")
+        except:
+            return 1
+
+        if check_set_exist != 0:
             print(f"Proccessed URL was found on Redis, bummer")
             continue
 
         # Create new set, insert urls
         for child_url in extracted_urls:
-            redis_connection_object.sadd(f"{normalized_master_url}_{curr_depth}_{req_depth}_0", child_url)
+            try:
+                redis_connection_object.sadd(f"{normalized_master_url}_{curr_depth}_{req_depth}_0", child_url)
+            except:
+                continue
 
     # Change key job status to processed
     key_comp_list[-1] = '1'
     key_comp_list[0] = normalized_master_url
     processed_key = '_'.join(key_comp_list)
-    redis_connection_object.rename(key, processed_key)
+    while True:
+        output = redis_connection_object.rename(key, processed_key)
+        if output == 'OK':
+            break
     
 
 
