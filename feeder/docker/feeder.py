@@ -77,7 +77,7 @@ def feeding(key, redis_connection_object):
             continue
         
         # Determine depths
-        key_comp_list = key.decode('utf-8').split('_')
+        key_comp_list = key.split('_')
         curr_depth_indicator, req_depth = key_comp_list[1], key_comp_list[2]
 
         # Determine Curr depth
