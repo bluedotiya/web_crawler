@@ -5,4 +5,4 @@ RUN pip3 install -r /app/requirements.txt
 ADD ./feeder/docker/feeder.py /app/feeder.py
 ADD ./feeder/docker/feeder_test.py /app/feeder_test.py
 
-ENTRYPOINT ["/usr/local/bin/python3", "/app/feeder.py"]
+ENTRYPOINT ["/usr/local/bin/python3", "-u", "/app/feeder.py"]
