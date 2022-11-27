@@ -50,7 +50,10 @@ def random_sleep():
     time.sleep((random.randrange(1,10,1)))
 
 def check_redis_for_jobs(redis_connection_object):
-    available_keys = redis_connection_object.keys('*')
+    try:
+        available_keys = redis_connection_object.keys('*')
+    except:
+        return False, None
     random.shuffle(available_keys)
     for key in available_keys:
         key_comp_list = key.decode('utf-8').split('_')
