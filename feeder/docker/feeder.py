@@ -54,7 +54,7 @@ def check_redis_for_jobs(redis_connection_object):
     random.shuffle(available_keys)
     for key in available_keys:
         key_comp_list = key.decode('utf-8').split('_')
-        if key_comp_list[-1] == 0 and (key_comp_list[-3] != key_comp_list[-2]):
+        if key_comp_list[-1] == '0' and (key_comp_list[-3] != key_comp_list[-2]):
             return True, key.decode('utf-8')
     return False, None
     
