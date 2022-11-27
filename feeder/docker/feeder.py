@@ -101,8 +101,13 @@ def feeding(key, redis_connection_object):
 
         # Create new set, insert urls
         for child_url in extracted_urls:
-            normalized_child_url = ('.'.join((child_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
-            redis_connection_object.sadd(f"{normalized_child_url}_{curr_depth}_{req_depth}_1")
+            redis_connection_object.sadd(f"{master_url}_{curr_depth}_{req_depth}_0", child_url)
+            
+    # Change key job status to processed
+    key_comp_list[-1] = '1'
+    processed_key = '_'.join(key_comp_list)
+    redis_connection_object.rename(key, processed_key)
+    
 
 
 def main():
