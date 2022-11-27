@@ -65,12 +65,14 @@ def feeding(key, redis_connection_object):
 
         # Continue if request fails
         if request_obj == '':
+            print("URL Request failed, Continuing")
             continue
         request_html = request_obj
         extracted_urls = extract_page_data(request_html)
 
         # Continue if no URLs were extracted
         if extracted_urls.__len__() == 0:
+            print("URL Extraction failed, Continuing")
             continue
         
         # Determine depths
@@ -83,11 +85,17 @@ def feeding(key, redis_connection_object):
         else:
             curr_depth = curr_depth_indicator + 1
 
+        # Printing depths
+        print(f"Current Depth is: {curr_depth}")
+        print(f"Requested Depth is: {req_depth}")
+
         # Normalized master URL
         normalized_master_url = ('.'.join((master_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
+        print(f"Normalized Master URL is: {normalized_master_url}")
 
         # Check if processed set exist
         if redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*") != 0:
+            print(f"Proccessed URL was found on Redis, bummer")
             continue
 
         # Create new set, insert urls
@@ -100,9 +108,12 @@ def main():
     while(True):
         job_starter, job_name = check_redis_for_jobs(redis_obj)
         if job_starter is False:
+            print("No Jobs found")
             random_sleep()
             continue
+        print(f"Job Found : {job_name}")
         feeding(job_name, redis_obj)
+        print("Feeding is Done!")
 
 
 if __name__ == "__main__":
