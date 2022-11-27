@@ -72,7 +72,7 @@ def index():
     # Remove http/s Scheme from URL, take only Domain name
     requested_url = client_req['url']
     normalized_url = ('.'.join((requested_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
-    root_url = f"{normalized_url}_ROOT_2_0"
+    root_url = f"{normalized_url}_ROOT_10_0"
     
     # Check if URL Root is found on redis, if not creates a root url.
     if redis_obj.exists(root_url) == 1:
