@@ -59,6 +59,7 @@ def check_redis_for_jobs(redis_connection_object):
     return False, None
     
 def feeding(key, redis_connection_object):
+    normalized_master_url = ''
     url_set = redis_connection_object.smembers(key)
     for encoded_master_url in url_set:
         master_url = encoded_master_url.decode('utf-8')
@@ -91,7 +92,6 @@ def feeding(key, redis_connection_object):
         print(f"Requested Depth is: {req_depth}")
 
         # Normalized master URL
-        normalized_master_url = ''
         master_url_list = (master_url.replace('https://', '')).replace('http://', '').split('.')
         if master_url_list.__len__() == 2:
             normalized_master_url = '.'.join(master_url_list)
@@ -112,6 +112,7 @@ def feeding(key, redis_connection_object):
 
     # Change key job status to processed
     key_comp_list[-1] = '1'
+    key_comp_list[0] = normalized_master_url
     processed_key = '_'.join(key_comp_list)
     redis_connection_object.rename(key, processed_key)
     
