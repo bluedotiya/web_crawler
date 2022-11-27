@@ -107,15 +107,15 @@ def feeding(key, redis_connection_object):
             normalized_master_url = ('.'.join(master_url_list[-1:-4:-1][-1:-4:-1])).upper()
         print(f"Normalized Master URL is: {normalized_master_url}")
 
-        # Check if processed set exist
-        try:
-            check_set_exist = redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*")
-        except:
-            return 1
-
-        if check_set_exist != 0:
-            print(f"Proccessed URL was found on Redis, bummer")
-            continue
+        ## Check if processed set exist
+        #try:
+        #    check_set_exist = redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*")
+        #except:
+        #    return 1
+#
+        #if check_set_exist != 0:
+        #    print(f"Proccessed URL was found on Redis, bummer")
+        #    continue
 
         # Create new set, insert urls
         for child_url in extracted_urls:
