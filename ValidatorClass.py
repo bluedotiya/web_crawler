@@ -33,8 +33,12 @@ class Validator:
 def ping_check(url_str):
     if "http://" in url_str:
         hostname = url_str[7:-1]
-    else:
+    elif "https://" in url_str:
         hostname = url_str[8:-1]
+    elif "Depth" in url_str:
+        return True
+    else:
+        return False
     if os.name == 'nt':
         count_char = '-n'
     else:
