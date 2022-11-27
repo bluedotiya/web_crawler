@@ -59,8 +59,9 @@ def check_redis_for_jobs(redis_connection_object):
     return False, None
     
 def feeding(key, redis_connection_object):
-    url_list = redis_connection_object.smembers(key)
-    for master_url in url_list.decode('utf-8'):
+    url_set = redis_connection_object.smembers(key)
+    for encoded_master_url in url_set:
+        master_url = encoded_master_url.decode('utf-8')
         request_obj = get_page_data(master_url)[0]
 
         # Continue if request fails
