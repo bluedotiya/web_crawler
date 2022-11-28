@@ -50,6 +50,6 @@ def drawer(node_size, nodes_pos_file, font_size, node_color, show_label, save):
             if f"{file_name_count}{file_name_ext}" in os.listdir("."):
                 file_name_count += 1
             else:
-                save_file_name = f"{file_name_count}{file_name_ext}"
+                save_file_name = f"/app/output/web_graph{file_name_ext}"
                 break
         plt.savefig(save_file_name, bbox_inches='tight', dpi=400)
