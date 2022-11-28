@@ -4,6 +4,7 @@ import networksX
 import os
 import shutil
 import time
+import sys
 
 
 def crawl(crawl_depth, root_url):
@@ -19,26 +20,20 @@ def draw(nodes_size, nodes_pos_file, font_size, node_color, save, label):
 	networksX.drawer(nodes_size, nodes_pos_file, font_size, node_color, save, label)
 
 
-def webigator(crawl_depth, root_url, calculate_only=False, is_positive_graph=True, vector_file="vector_file.txt",
-	nodes_file="nodes_file.txt", node_size=100, node_label_size=7, show_label=True, nodes_color="b", save_graph=False):
-	if not calculate_only:
-		time.sleep(2)
-		for i in range(1, 10):
-			shutil.rmtree(f"Depth{i}", True)
-		try:
-			os.remove(vector_file)
-			os.remove(nodes_file)
-		except:
-			pass
-		time.sleep(2)
-		crawl(crawl_depth, root_url)
+def webigator(crawl_depth=2, root_url="https://www.google.com/", calculate_only=False, is_positive_graph=True, vector_file="output/vector_file.txt",
+	nodes_file="output/nodes_file.txt", node_size=100, node_label_size=7, show_label=True, nodes_color="b", save_graph=True):
+	crawl(crawl_depth, root_url)
 	calculate(crawl_depth, is_positive_graph, vector_file, nodes_file)
 	draw(node_size, nodes_file, node_label_size, nodes_color, show_label, save_graph)
 
 
 def main():
-	webigator(4, "https://www.google.com/", calculate_only=True, save_graph=False)
-
+	os.mkdir("output")
+	if len(sys.argv) != 2 or len(sys.argv) != 1:
+		print("Args not provided\n - Starting with Default Parameters\n - URL: https://www.google.com \n - Depth: 2")
+		webigator()
+	else:
+		webigator(sys.argv[1], sys.argv[2])
 
 if __name__ == "__main__":
 	main()

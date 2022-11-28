@@ -78,15 +78,15 @@ def save(parent_url, url_list, depth_num, time_elapsed, url_counter, parent_file
        """
 
     try:
-        os.mkdir(f"Depth{depth_num}/Parent{url_counter}")
-        with open(f"Depth{depth_num}/Parent{url_counter}/Parent_Url_{url_counter}.txt", "a") as parent_file:
+        os.mkdir(f"output/Depth{depth_num}/Parent{url_counter}")
+        with open(f"output/Depth{depth_num}/Parent{url_counter}/Parent_Url_{url_counter}.txt", "a") as parent_file:
             parent_file.write(f"{parent_url}\n")
             parent_file.write(f"{parent_file_pointer}\n")
             if type(time_elapsed) is datetime.timedelta:
                 parent_file.write(str(time_elapsed.microseconds / 1000 / 2))
             else:
                 parent_file.write("FAIL")
-        with open(f"Depth{depth_num}/Parent{url_counter}/Child_Urls_{url_counter}.txt", "a") as buffer_file:
+        with open(f"output/Depth{depth_num}/Parent{url_counter}/Child_Urls_{url_counter}.txt", "a") as buffer_file:
             if len(url_list) == 0:
                 buffer_file.writelines(f"No URL's found")
             else:

@@ -13,12 +13,12 @@ def depth_cycle(depth, root_url):
     """
     parent_url_counter = 1
     for depth in range(1, depth + 1):
-        os.mkdir(f"Depth{depth}")
+        os.mkdir(f"output/Depth{depth}")
         if depth == 1:
             rtb_cycle(depth, root_url)
             parent_url_counter += 1
         else:
-            for parent_folder in set([int(name.replace('Parent', '')) for name in os.walk(f"Depth{depth - 1}").__next__()[1]]):
+            for parent_folder in set([int(name.replace('Parent', '')) for name in os.walk(f"output/Depth{depth - 1}").__next__()[1]]):
                 """List Comprehension explanation: Get a list of Parent folders on the previous depth, remove the 
                 word Parent, turn into a int and order into a set this will give us an int following number set from 
                 first parent folder to the last, this section have two jobs:
@@ -38,8 +38,8 @@ def depth_cycle(depth, root_url):
                 for parent_folder in set([1, 2, 3])
                 
                 """
-                with open(f"Depth{depth - 1}/Parent{parent_folder}/Child_Urls_{parent_folder}.txt", "r") as url_file:
-                    with open(f"Depth{depth - 1}/Parent{parent_folder}/Parent_Url_{parent_folder}.txt") as parent_file:
+                with open(f"output/Depth{depth - 1}/Parent{parent_folder}/Child_Urls_{parent_folder}.txt", "r") as url_file:
+                    with open(f"output/Depth{depth - 1}/Parent{parent_folder}/Parent_Url_{parent_folder}.txt") as parent_file:
                         parent_url = parent_file.readlines()[0].replace('\n', '')
                         url_file_content = url_file.readlines()
                         for url in url_file_content:

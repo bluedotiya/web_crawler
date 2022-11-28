@@ -5,8 +5,8 @@ import math
 
 def generator(depth, vector_file):
 	for level in range(1, depth + 1):
-		for parent_folder in set([int(name.replace('Parent', '')) for name in os.walk(f"Depth{level}").__next__()[1]]):
-			with open(f"Depth{level}/Parent{parent_folder}/Parent_Url_{parent_folder}.txt", "r") as url_file:
+		for parent_folder in set([int(name.replace('Parent', '')) for name in os.walk(f"output/Depth{level}").__next__()[1]]):
+			with open(f"output/Depth{level}/Parent{parent_folder}/Parent_Url_{parent_folder}.txt", "r") as url_file:
 				file_content = url_file.readlines()
 				file_content_no_newline = [url.replace('\n', '') for url in file_content]
 				if file_content_no_newline[2] != "FAIL":
