@@ -24,8 +24,7 @@ def vector_calculator(son_url, parent_url, time, depth):
 	url_string = son_url
 	url = url_string.split('/')[2]
 	splited = url.split('.')
-	if splited.__len__() == 3:
-		sub_domain, domain_name, top_level_domain = splited
+	if splited.__len__() == 3 or parent_url == 'Root':
 		for char in url:
 			domain_sum += ord(char)
 		theta_angle = domain_sum % 90
