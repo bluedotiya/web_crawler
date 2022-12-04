@@ -13,7 +13,10 @@ def depth_cycle(depth, root_url):
     """
     parent_url_counter = 1
     for depth in range(1, depth + 1):
-        os.mkdir(f"output/Depth{depth}")
+        try:
+            os.mkdir(f"output/Depth{depth}")
+        except FileExistsError:
+            pass
         if depth == 1:
             rtb_cycle(depth, root_url)
             parent_url_counter += 1
