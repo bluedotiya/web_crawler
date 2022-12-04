@@ -20,8 +20,6 @@ jobs:
             image: ghcr.io/bluedotiya/web_crawler/feeder
           - dockerfile: manager/docker/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/manager
-          - dockerfile: feeder_standalone/docker/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/feeder_standalone
     permissions:
       contents: read
       packages: write
