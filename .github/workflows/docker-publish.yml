@@ -1,4 +1,4 @@
-name: /[master/] Build & publish containers
+name: \[master] Build & publish containers
 on:
   release:
     types: [published]
