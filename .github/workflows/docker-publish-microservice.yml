@@ -1,4 +1,4 @@
-name: microservice Build & publish containers
+name: microservice - Build & publish containers
 on:
   release:
     types: [published]
