@@ -28,7 +28,13 @@ def main():
 	try:
 		os.mkdir("output")
 	except FileExistsError:
-		rmtree('output')
+		dir = 'output'
+		for files in os.listdir(dir):
+			path = os.path.join(dir, files)
+			try:
+				rmtree(path)
+			except OSError:
+				os.remove(path)
 	if (os.environ.get('URL') is not None) and (os.environ.get('DEPTH') is not None):
 		url_str = str(os.environ.get('URL'))
 		crawl_depth_int = int(os.environ.get('DEPTH'))
