@@ -14,7 +14,7 @@ def data_to_node(graph_object, node_size, nodes_position_file):
         for line in json_file:
             line_dict = json.loads(line)
             x_pos, y_pos = line_dict['son_url']['pos'][0], line_dict['son_url']['pos'][1]
-            domain_name = line_dict['son_url']['url'].split('.')[-2]
+            domain_name = line_dict['son_url']['url'].replace('https://', '').replace('http://', '').replace('/', '')
             parent_url = line_dict['parent_url']
             son_url = line_dict['son_url']['url']
             graph_object.add_node(node_counter, pos=(float(x_pos), float(y_pos)), size=node_size, dname=domain_name,
