@@ -2,7 +2,7 @@ import WebCrawler
 import Node_Generator
 import networksX
 import os
-
+from shutil import rmtree
 
 def crawl(crawl_depth, root_url):
 	WebCrawler.depth_cycle(crawl_depth, root_url)
@@ -26,9 +26,9 @@ def webigator(crawl_depth=2, root_url="https://www.google.com/", calculate_only=
 
 def main():
 	try:
-		os.mkdir(f"output")
+		os.mkdir("output")
 	except FileExistsError:
-		pass
+		rmtree('output')
 	if (os.environ.get('URL') is not None) and (os.environ.get('DEPTH') is not None):
 		url_str = str(os.environ.get('URL'))
 		crawl_depth_int = int(os.environ.get('DEPTH'))

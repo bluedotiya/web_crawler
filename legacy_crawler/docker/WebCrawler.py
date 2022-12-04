@@ -1,6 +1,6 @@
 import RTB
 import os
-
+from shutil import rmtree
 
 def depth_cycle(depth, root_url):
     """
