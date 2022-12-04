@@ -2,9 +2,6 @@ import WebCrawler
 import Node_Generator
 import networksX
 import os
-import shutil
-import time
-import sys
 
 
 def crawl(crawl_depth, root_url):
@@ -20,20 +17,29 @@ def draw(nodes_size, nodes_pos_file, font_size, node_color, save, label):
 	networksX.drawer(nodes_size, nodes_pos_file, font_size, node_color, save, label)
 
 
-def webigator(crawl_depth=2, root_url="https://www.google.com/", calculate_only=False, is_positive_graph=True, vector_file="output/vector_file.txt",
-	nodes_file="output/nodes_file.txt", node_size=100, node_label_size=7, show_label=True, nodes_color="b", save_graph=True):
+def webigator(crawl_depth=2, root_url="https://www.google.com/", calculate_only=False, is_positive_graph=False, vector_file="output/vector_file.txt",
+	nodes_file="output/nodes_file.txt", node_size=100, node_label_size=7, show_label=True, nodes_color="r", save_graph=True):
 	crawl(crawl_depth, root_url)
 	calculate(crawl_depth, is_positive_graph, vector_file, nodes_file)
 	draw(node_size, nodes_file, node_label_size, nodes_color, show_label, save_graph)
 
 
 def main():
-	os.mkdir("output")
-	if len(sys.argv) != 2 or len(sys.argv) != 1:
+	try:
+		os.mkdir(f"output")
+	except FileExistsError:
+		pass
+	if (os.environ.get('URL') is not None) and (os.environ.get('DEPTH') is not None):
+		url_str = str(os.environ.get('URL'))
+		crawl_depth_int = int(os.environ.get('DEPTH'))
+		print(f"Starting \n - URL: {url_str} \n - Depth: {crawl_depth_int}")
+		webigator(crawl_depth=crawl_depth_int, root_url=url_str)
+		print("Done")
+	else:
 		print("Args not provided\n - Starting with Default Parameters\n - URL: https://www.google.com \n - Depth: 2")
 		webigator()
-	else:
-		webigator(sys.argv[1], sys.argv[2])
+		print("Done")
+		
 
 if __name__ == "__main__":
 	main()
