@@ -1,0 +1,1 @@
+memgraph-0.memgraph-svc.default.svc.cluster.local
