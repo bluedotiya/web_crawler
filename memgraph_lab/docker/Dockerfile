@@ -28,7 +28,7 @@ USER 1000
 
 # Set VNC ENV Variables
 ENV VNC_RESOLUTION=1920x1080
-ENV VNC_PASSWORDLESS=${1:+1}
+ENV VNC_PASSWORDLESS=
 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
 CMD ["--wait"]
