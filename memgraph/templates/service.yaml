@@ -1,0 +1,17 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: memgraph-svc
+  labels:
+    app.kubernetes.io/name: memgraph
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7687
+      targetPort: 7687
+      protocol: TCP
+      name: bolt
+  selector:
+    app.kubernetes.io/name: memgraph

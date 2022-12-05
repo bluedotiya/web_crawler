@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headless-vnc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headless-vnc
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: headless-vnc
+        track: stable
+    spec:
+      containers:
+        - name: headless-vnc
+          image: ghcr.io/bluedotiya/web_crawler/frontend:microservice
+          imagePullPolicy: IfNotPresent
