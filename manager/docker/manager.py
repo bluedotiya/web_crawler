@@ -1,15 +1,16 @@
 import json
 import jsonschema
 from flask import Flask, request, Response
+import gqlalchemy as gq
 import requests
 import re
-import redis
 
 # Global DNS Record
-REDIS_DNS_NAME = "redis.redis.svc.cluster.local"
+MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
 
 # Global Redis connection obj
-redis_obj = redis.Redis(host=REDIS_DNS_NAME, port=6379, db=0, password='a-very-complex-password-here')
+db = Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
+
 
 # Global Flask server obj
 app = Flask(__name__)
@@ -71,22 +72,8 @@ def index():
     
     # Remove http/s Scheme from URL, take only Domain name
     requested_url = client_req['url']
-    normalized_url = ('.'.join((requested_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
-    root_url = f"{normalized_url}_ROOT_10_0"
+    root_url = ('.'.join((requested_url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
     
-    # Check if URL Root is found on redis, if not creates a root url.
-    if redis_obj.exists(root_url) == 1:
-        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
-    # Check if the desired request was successful
-    request_obj = get_page_data(client_req['url'])
-    if request_obj == ('', ''):
-        return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
-    
-    # Assign html content, request time to vars & Extracting urls from html content
-    request_html, request_time = request_obj
-    extracted_urls = extract_page_data(request_html)
-    for url in extracted_urls['urls']:
-        redis_obj.sadd(root_url, str(url))
-    # Send Successful Job status to Client
+    gq.Merge()
     client_answer = json.dumps({'Success':'Job started'}), "200"
     return client_answer
