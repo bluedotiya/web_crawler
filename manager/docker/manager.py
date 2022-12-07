@@ -97,8 +97,9 @@ def index():
     # Check if URL Root is found on memgraph
     try:
        next(find_root_node_query.execute())
+       return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     except StopIteration:
-        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
+        print("requested url is not on database, starting search! :)")
 
     # Create ROOT URL Node on memgraph
     gq.Create(db)\
