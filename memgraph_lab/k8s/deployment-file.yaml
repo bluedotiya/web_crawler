@@ -17,4 +17,4 @@ spec:
       containers:
         - name: headless-vnc
           image: ghcr.io/bluedotiya/web_crawler/frontend:microservice
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always

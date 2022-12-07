@@ -19,5 +19,6 @@ spec:
       containers:
         - name: manager
           image: ghcr.io/bluedotiya/web_crawler/manager:microservice
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
