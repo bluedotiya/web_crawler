@@ -81,7 +81,8 @@ def index():
     root_url = normalize_url(requested_url)
 
     # Declare Root Node labels & Node match filter
-    root_labels_dict = {'depth': 'ROOT',
+    root_labels_dict = {'url'            : root_url,
+                        'depth'          : 'ROOT',
                         'requested_depth': 'req_depth_3'}
 
     root_node_labels = [root_labels_dict['depth'],
@@ -94,6 +95,12 @@ def index():
                              .node(labels=match_filters, variable='node')\
                              .where(item='node.name', operator=Operator.EQUAL, literal=root_url)\
                              .return_()
+
+    # Check if the desired request was successful
+    request_obj = get_page_data(client_req['url'])
+    if request_obj == ('', ''):
+        return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
+
     # Check if URL Root is found on memgraph
     try:
        next(find_root_node_query.execute())
@@ -106,10 +113,6 @@ def index():
       .node(labels=root_node_labels, name=root_labels_dict['url'])\
       .execute()
 
-    # Check if the desired request was successful
-    request_obj = get_page_data(client_req['url'])
-    if request_obj == ('', ''):
-        return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
 
     # Assign html content, request time to vars & Extracting urls from html content
     request_html, request_time = request_obj
