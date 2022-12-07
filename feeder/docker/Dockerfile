@@ -1,7 +1,14 @@
-FROM python:3.8.15-alpine3.16
+FROM python:3.8.15-buster
 
+# Installing gqlalchemy requirements
+RUN apt update
+RUN apt install cmake -y
+
+# Add PIP Requirements file and installing them
 ADD ./feeder/docker/requirements.txt /app/requirements.txt
 RUN pip3 install -r /app/requirements.txt
+
+# Add python application files
 ADD ./feeder/docker/feeder.py /app/feeder.py
 ADD ./feeder/docker/feeder_test.py /app/feeder_test.py
 
