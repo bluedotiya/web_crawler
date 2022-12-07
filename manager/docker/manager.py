@@ -57,7 +57,13 @@ def extract_page_data(html_content):
 
 
 def normalize_url(url):
-    return ('.'.join((url.replace('https://', '')).replace('http://', '').split('.')[-1:-3:-1][-1:-3:-1])).upper()
+    url_list = (url.replace('https://', '')).replace('http://', '').split('.')
+    if url_list.__len__() == 2:
+        return '.'.join(url_list)
+    if url_list.__len__() == 3:
+        return ('.'.join(url_list[-1:-3:-1][-1:-3:-1])).upper()
+    else:
+        return ('.'.join(url_list[-1:-4:-1][-1:-4:-1])).upper()
 
 
 @app.route('/', methods=['POST'])
