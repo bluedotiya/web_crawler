@@ -89,14 +89,15 @@ def index():
 
     match_filters = root_node_labels
 
-    # Check if URL Root is found on memgraph
+    # Prepare Match query for root node
     find_root_node_query = gq.Match(connection=db)\
                              .node(labels=match_filters, variable='node')\
                              .where(item='node.name', operator=Operator.EQUAL, literal=root_url)\
                              .return_()
-
-    match_results = next(find_root_node_query.execute())
-    if match_results.__len__() != 0:
+    # Check if URL Root is found on memgraph
+    try:
+       next(find_root_node_query.execute())
+    except StopIteration:
         return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
 
     # Create ROOT URL Node on memgraph
