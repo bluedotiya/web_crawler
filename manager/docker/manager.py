@@ -130,7 +130,7 @@ def index():
         gq.Match(db) \
             .node(labels=match_filters, variable='node') \
             .where(item='node.name', operator=Operator.EQUAL, literal=root_url) \
-            .create() \
+            .create(db) \
             .to(relationship_type="Links") \
             .node(labels=['curr_depth_1', 'req_depth_3', 'processed_0'], name=norm_url) \
             .execute()
