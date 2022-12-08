@@ -127,8 +127,10 @@ def index():
         # Normalize url iterator
         norm_url = normalize_url(url)
         # Create node for each URL found and link it to Root Node
-        gq.Merge(db) \
-            .node(labels=root_node_labels, name=root_labels_dict['url']) \
+        gq.Match(db) \
+            .node(labels=match_filters, variable='node') \
+            .where(item='node.name', operator=Operator.EQUAL, literal=root_url) \
+            .create() \
             .to(relationship_type="Links") \
             .node(labels=['curr_depth_1', 'req_depth_3', 'processed_0'], name=norm_url) \
             .execute()
