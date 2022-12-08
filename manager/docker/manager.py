@@ -5,11 +5,12 @@ import gqlalchemy as gq
 from gqlalchemy.query_builders.memgraph_query_builder import Operator
 import requests
 import re
+import py2neo
 
 # Global DNS Record
 MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
 
-# Global Redis connection obj
+# Global Memgraph connection obj
 db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
 
 
