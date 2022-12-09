@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: headless-vnc
+  name: memgraph-lab
   labels:
-    app.kubernetes.io/name: headless-vnc
+    app.kubernetes.io/name: memgraph-lab
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: headless-vnc
+      app: memgraph-lab
       track: stable
   template:
     metadata:
       labels:
-        app: headless-vnc
+        app: memgraph-lab
         track: stable
     spec:
       containers:
-        - name: headless-vnc
+        - name: memgraph-lab
           image: ghcr.io/bluedotiya/web_crawler/frontend:microservice
           imagePullPolicy: Always
