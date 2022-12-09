@@ -17,8 +17,8 @@ RUN curl https://download.memgraph.com/memgraph-lab/v2.4.0/MemgraphLab-2.4.0.deb
 RUN apt install -y ./memlab.deb
 
 # Memgraph lab desktop shortcut
-ADD memgraph_lab/docker/memgraph-desktop-shortcut.desktop /headless/Desktop/memgraph-lab.desktop
-ADD memgraph_lab/docker/memgraph-server-dns-name.txt /headless/Desktop/memgraph-server-dns-name.txt
+ADD memgraph-lab/docker/memgraph-desktop-shortcut.desktop /headless/Desktop/memgraph-lab.desktop
+ADD memgraph-lab/docker/memgraph-server-dns-name.txt /headless/Desktop/memgraph-server-dns-name.txt
 
 # Add execute permission to shortcut
 RUN chmod +x /headless/Desktop/memgraph-lab.desktop
