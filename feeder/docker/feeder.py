@@ -1,14 +1,14 @@
 import requests
 import re
-import redis
+from gqlalchemy import Memgraph 
 import random
 import time
 
 # Global DNS Record
-REDIS_DNS_NAME = "redis.redis.svc.cluster.local"
+MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
 
 # Global Redis connection obj
-redis_obj = redis.Redis(host=REDIS_DNS_NAME, port=6379, db=0, password='a-very-complex-password-here')
+db = Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
 
 def get_page_data(url):
     """
@@ -137,6 +137,8 @@ def feeding(key, redis_connection_object):
 
 def main():
     while(True):
+        random_sleep()
+        continue
         job_starter, job_name = check_redis_for_jobs(redis_obj)
         if job_starter is False:
             print("No Jobs found")

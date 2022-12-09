@@ -8,10 +8,12 @@ import re
 import py2neo
 
 # Global DNS Record
-MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
+# Should be memgraph-0.memgraph-svc.default.svc.cluster.local
+MEMGRAPH_DNS_NAME = "192.168.49.2"
 
 # Global Memgraph connection obj
-db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
+# Port should be 7687
+db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=30000)
 
 
 # Global Flask server obj
@@ -138,4 +140,3 @@ def index():
 
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
-

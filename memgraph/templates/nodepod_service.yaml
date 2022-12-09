@@ -1,0 +1,18 @@
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: memgraph-np-svc
+  labels:
+    app.kubernetes.io/name: memgraph
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  ports:
+    - port: 7687
+      targetPort: 7687
+      nodePort: 30000
+      protocol: TCP
+      name: bolt
+  selector:
+    app.kubernetes.io/name: memgraph
