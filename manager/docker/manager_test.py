@@ -4,7 +4,7 @@ MANAGER_DNS_NAME = "localhost"
 
 def send_data(user_input):
     print(f"{8*'='}REQUEST STARTED{8*'='}")
-    res = requests.post(f"http://{MANAGER_DNS_NAME}:8080", json=user_input)
+    res = requests.post(f"http://{MANAGER_DNS_NAME}", json=user_input)
     print(f"==Client==:{res.request.body}")
     print(f"==Client==:{res.status_code}")
     print(f"==Client==:{res._content}")

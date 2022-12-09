@@ -15,11 +15,11 @@ debugpy.wait_for_client()
 
 # Global DNS Record
 # Should be memgraph-0.memgraph-svc.default.svc.cluster.local
-MEMGRAPH_DNS_NAME = "192.168.49.2"
+MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
 
 # Global Memgraph connection obj
 # Port should be 7687
-db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=30000)
+db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
 
 
 # Global Flask server obj
