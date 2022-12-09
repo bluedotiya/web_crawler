@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: feeder
   labels:
-    app: feeder
+    app.kubernetes.io/name: feeder
+    app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 5
   selector:

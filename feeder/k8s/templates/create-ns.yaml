@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: feeder
+  labels:
+    app.kubernetes.io/name: feeder
+    app.kubernetes.io/managed-by: Helm
