@@ -23,7 +23,7 @@ spec:
       containers:
         - name: memgraph
           image: "memgraph/memgraph:latest"
-          imagePullPolicy: always
+          imagePullPolicy: Always
           ports:
             - name: memgraph
               containerPort: 7687
