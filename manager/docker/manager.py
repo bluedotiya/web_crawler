@@ -6,6 +6,12 @@ from gqlalchemy.query_builders.memgraph_query_builder import Operator
 import requests
 import re
 import py2neo
+import debugpy # TODO REMOVE ALL DEBUG ONCE READY
+
+# 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+debugpy.listen(5678)
+print("Waiting for debugger attach")
+debugpy.wait_for_client()
 
 # Global DNS Record
 # Should be memgraph-0.memgraph-svc.default.svc.cluster.local
