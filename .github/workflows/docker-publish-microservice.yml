@@ -20,7 +20,7 @@ jobs:
             image: ghcr.io/bluedotiya/web_crawler/feeder
           - dockerfile: manager/docker/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/manager
-          - dockerfile: memgraph_lab/docker/Dockerfile
+          - dockerfile: memgraph-lab/docker/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/frontend
     permissions:
       contents: read
