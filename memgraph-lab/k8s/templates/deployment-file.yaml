@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: memgraph-lab
+  name: {{ .Values.app }}
   labels:
-    app.kubernetes.io/name: memgraph-lab
+    app.kubernetes.io/name: {{ .Values.app }}
     app.kubernetes.io/managed-by: Helm
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: memgraph-lab
+      app: {{ .Values.app }}
       track: stable
   template:
     metadata:
       labels:
-        app: memgraph-lab
+        app: {{ .Values.app }}
         track: stable
     spec:
       containers:
-        - name: memgraph-lab
-          image: ghcr.io/bluedotiya/web_crawler/frontend:microservice
-          imagePullPolicy: Always
+        - name: {{ .Values.app }}
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}

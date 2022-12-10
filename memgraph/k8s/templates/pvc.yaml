@@ -1,45 +1,22 @@
+{{- range .Values.PV  }}
 apiVersion: v1
-kind: PersistentVolume
+kind: {{ .kind }}
 metadata:
-  name: memgraph-local-storage-1
+  name: {{ .name }}
 spec:
+  accessModes:
+    - {{ .accessModes }}
+{{- if eq .kind "PersistentVolume" }}
   capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
+    storage: {{ .storage }}
   hostPath:
-    path: "/storage/memgraph-1"
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: memgraph-local-storage-2
-spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/storage/memgraph-2"
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: memgraph-lib-pv-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
+    path: {{ .path }}
+{{ else if eq .kind "PersistentVolumeClaim" }}
   resources:
     requests:
-      storage: 1Gi
+      storage: {{ .storage }}
+{{ else }}
+{{- fail "Unknown Volume Kind" }}
+{{- end }}
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: memgraph-log-pv-claim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+{{- end }}

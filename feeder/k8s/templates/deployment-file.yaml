@@ -1,26 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: feeder
+  name: {{ .Values.app }}
   labels:
-    app.kubernetes.io/name: feeder
+    app.kubernetes.io/name: {{ .Values.app }}
     app.kubernetes.io/managed-by: Helm
 spec:
-  replicas: 5
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: feeder
+      app: {{ .Values.app }}
       track: stable
   template:
     metadata:
       labels:
-        app: feeder
+        app: {{ .Values.app }}
         track: stable
     spec:
       containers:
-        - name: feeder
-          image: ghcr.io/bluedotiya/web_crawler/feeder:microservice
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-            - containerPort: 5678 # TODO REMOVE THIS LINE Debugging
+        - name: {{ .Values.app }}
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports: 
+          {{- range .Values.ports }} 
+            - containerPort: {{ .containerPort }}
+          {{- end }}    

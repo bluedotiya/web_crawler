@@ -1,15 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: feeder
+  name: {{ .Values.app }}
   labels:
-    app.kubernetes.io/name: feeder
+    app.kubernetes.io/name: {{ .Values.app }}
     app.kubernetes.io/managed-by: Helm
 spec:
   clusterIP: None
-  ports:
-  - port: 80
-    targetPort: 80
-    name: feeder
+  ports: 
+  {{- $map:=first .Values.ports }}
+    - port: {{ $map.containerPort }}
+      targetPort: {{ $map.containerPort }} 
+  name: {{ .Values.app }}
   selector:
-    app: feeder
+    app: {{ .Values.app }}
