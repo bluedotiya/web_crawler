@@ -1,8 +1,6 @@
 import json
 import jsonschema
 from flask import Flask, request, Response
-import gqlalchemy as gq
-from gqlalchemy.query_builders.memgraph_query_builder import Operator
 import requests
 import re
 import py2neo
@@ -14,13 +12,13 @@ print("Waiting for debugger attach")
 debugpy.wait_for_client()
 
 # Global DNS Record
-# Should be memgraph-0.memgraph-svc.default.svc.cluster.local
-MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
+# Should be 'neo4j.neo4j.svc.cluster.local:7687'
+NEO4J_DNS_NAME = "neo4j.neo4j.svc.cluster.local:7687"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "password"
 
-# Global Memgraph connection obj
-# Port should be 7687
-db = gq.Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
-
+# Global Neo4j connection obj
+graph = py2neo.Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
 # Global Flask server obj
 app = Flask(__name__)

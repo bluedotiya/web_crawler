@@ -11,6 +11,7 @@ spec:
     storage: {{ .storage }}
   hostPath:
     path: {{ .path }}
+    type: FileOrCreate
 {{ else if eq .kind "PersistentVolumeClaim" }}
   resources:
     requests:
