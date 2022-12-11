@@ -62,15 +62,27 @@ def extract_page_data(html_content):
     response_dict = {'urls': found_list}
     return response_dict
 
-
 def normalize_url(url):
     url_list = (url.replace('https://', '')).replace('http://', '').split('.')
     if url_list.__len__() == 2:
-        return '.'.join(url_list)
+        return '.'.join(url_list).upper()
     if url_list.__len__() == 3:
-        return ('.'.join(url_list[-1:-3:-1][-1:-3:-1])).upper()
-    else:
         return ('.'.join(url_list[-1:-4:-1][-1:-4:-1])).upper()
+    else:
+        return ('.'.join(url_list[-1:-5:-1][-1:-5:-1])).upper()
+
+def get_domain_name(normalized_url):
+    with open('/app/iana_top_level_domains.txt', 'r') as iana:
+        splited_url = normalized_url.split('.')
+        for top_domain in iana:
+            try:
+                splited_url.remove(top_domain.replace('\n', '').upper())
+                if splited_url.__len__() == 2 or splited_url.__len__() == 1:
+                    return splited_url[-1]
+            except ValueError:
+                continue
+        return splited_url[-1]
+
 
 
 @app.route('/', methods=['POST'])
@@ -93,54 +105,31 @@ def index():
     requested_url = client_req['url']
     root_url = normalize_url(requested_url)
 
-    # Declare Root Node labels & Node match filter
-    root_labels_dict = {'url'            : root_url,
-                        'depth'          : 'ROOT',
-                        'requested_depth': 'req_depth_3'}
-
-    root_node_labels = [root_labels_dict['depth'],
-                        root_labels_dict['requested_depth']]
-
-    match_filters = root_node_labels
-
-    # Prepare Match query for root node
-    find_root_node_query = gq.Match(connection=db)\
-                             .node(labels=match_filters, variable='node')\
-                             .where(item='node.name', operator=Operator.EQUAL, literal=root_url)\
-                             .return_()
-
-    # Check if the desired request was successful
+    # Check if the desired request was successful & Assign html content, request time to vars 
     request_obj = get_page_data(client_req['url'])
     if request_obj == ('', ''):
         return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
-
-    # Check if URL Root is found on memgraph
-    try:
-       next(find_root_node_query.execute())
-       return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
-    except StopIteration:
-        print("requested url is not on database, starting search! :)")
-
-    # Create ROOT URL Node on memgraph
-    gq.Create(db)\
-      .node(labels=root_node_labels, name=root_labels_dict['url'])\
-      .execute()
-
-
-    # Assign html content, request time to vars & Extracting urls from html content
     request_html, request_time = request_obj
     extracted_urls = extract_page_data(request_html)
+
+    # Check if URL Root is found on neo4j
+    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=2).first() is not None:
+       return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
+    print("requested url is not on database, starting search! :)")
+   
+    # Get root node
+    domain = get_domain_name(root_url)
+    root_node = py2neo.Node("ROOT", domain, name=root_url, requested_depth=2, request_time=request_time)
+    lead = py2neo.Relationship.type("Lead")
+    relationship_tree = None
     for url in extracted_urls['urls']:
-        # Normalize url iterator
         norm_url = normalize_url(url)
-        # Create node for each URL found and link it to Root Node
-        gq.Match(db) \
-            .node(labels=match_filters, variable='node') \
-            .where(item='node.name', operator=Operator.EQUAL, literal=root_url) \
-            .create(db) \
-            .to(relationship_type="Links") \
-            .node(labels=['curr_depth_1', 'req_depth_3', 'processed_0'], name=norm_url) \
-            .execute()
+        url_node = py2neo.Node("URL", domain, name=norm_url, requested_depth=2, current_depth=1, request_time=request_time)
+        if relationship_tree is None:
+            relationship_tree = lead(root_node, url_node)
+        else:
+            relationship_tree = relationship_tree | lead(root_node, url_node) 
+    graph.create(relationship_tree)
 
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
