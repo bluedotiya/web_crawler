@@ -8,9 +8,10 @@ metadata:
 spec:
   clusterIP: None
   ports: 
-  {{- $map:=first .Values.ports }}
-    - port: {{ $map.containerPort }}
-      targetPort: {{ $map.containerPort }} 
-  name: {{ .Values.app }}
+  {{- range .Values.ports }} 
+    - name: port-{{ .containerPort }}
+      port: {{ .containerPort }}
+      targetPort: {{ .containerPort }} 
+  {{- end }}    
   selector:
     app: {{ .Values.app }}

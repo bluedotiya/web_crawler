@@ -123,6 +123,7 @@ def index():
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls['urls']:
+        domain = get_domain_name(url)
         norm_url = normalize_url(url)
         url_node = py2neo.Node("URL", domain, name=norm_url, requested_depth=2, current_depth=1, request_time=request_time)
         if relationship_tree is None:

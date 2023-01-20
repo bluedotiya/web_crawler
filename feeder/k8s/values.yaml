@@ -10,4 +10,3 @@ imagePullPolicy: "IfNotPresent"
 
 ports: 
   - containerPort: 80
-  - containerPort: 5678 # Debug Port TODO REMOVE
