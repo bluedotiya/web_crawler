@@ -1,6 +1,6 @@
 import json
 import jsonschema
-from flask import Flask, request, Response
+from flask import Flask, request, Response, render_template
 import requests
 import re
 import py2neo
@@ -79,9 +79,11 @@ def get_domain_name(url):
         counter = counter + 1
 
 
+@app.route('/')
+def form():
+    return render_template('index.html')
 
-
-@app.route('/', methods=['POST'])
+@app.route('/data', methods=['POST'])
 def index():
     # Check client request header is json
     if not request.is_json:
