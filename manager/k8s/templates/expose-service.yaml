@@ -6,12 +6,12 @@ metadata:
     app.kubernetes.io/name: {{ .Values.app }}
     app.kubernetes.io/managed-by: Helm
 spec:
-  clusterIP: None
+  type: NodePort
   ports: 
-  {{- range .Values.ports }} 
-    - name: port-{{ .containerPort }}
-      port: {{ .containerPort }}
-      targetPort: {{ .containerPort }} 
-  {{- end }}    
+  {{- range .Values.ports }}
+    - port: {{ .containerPort }}
+      nodePort: {{ .nodeport }} 
+      name: {{ .name }}
+  {{- end }}  
   selector:
     app: {{ .Values.app }}

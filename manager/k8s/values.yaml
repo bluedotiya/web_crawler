@@ -9,4 +9,6 @@ image: "ghcr.io/bluedotiya/web_crawler/manager:microservice"
 imagePullPolicy: "IfNotPresent"
 
 ports: 
-  - containerPort: 80
+  - name: http
+    containerPort: 80
+    nodeport: 30080
