@@ -10,5 +10,6 @@ ENV FLASK_APP=/app/manager.py
 # Add python application files
 ADD ./manager/docker/manager.py /app/manager.py
 ADD ./manager/docker/manager_test.py /app/manager_test.py
+ADD ./manager/docker/index.html /app/index.html
 
 ENTRYPOINT ["/usr/local/bin/flask", "run", "--host=0.0.0.0", "--port=80"]
