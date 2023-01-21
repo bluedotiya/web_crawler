@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit
@@ -9,8 +11,6 @@ if [ $# -eq 0 ]; then
     >&2 printf "No Arguments provided! \nWebcrawler Neo4j Installer: \nusage: \nscript.sh -o <install/remove>\n"; exit 1
 fi
 
-operation='123'
-
 while getopts ":ho:" option; do
    case $option in
       o) operation=$OPTARG;;
@@ -18,8 +18,6 @@ while getopts ":ho:" option; do
      \?) echo "Error: Invalid option"; exit 1;;
    esac
 done
-
-echo $operation
 
 if [[ $operation == "install" ]];then
   kubectl apply -f neo4j/k8s/pvc.yaml
@@ -47,6 +45,7 @@ if [[ $operation == "install" ]];then
 
   printf "Deployment Done you can connect Neo4j Browser on: http://$(hostname):$(kubectl describe svc crawler-neo4j-expose | grep http | grep NodePort | cut -d ' ' -f 20 | cut -d '/' -f 1)\n"
   printf "Database Port is: $(kubectl describe svc crawler-neo4j-expose | grep db-port | grep NodePort | cut -d ' ' -f 20 | cut -d '/' -f 1)\n"
+  exit 0
 elif [[ $operation == "uninstall" ]];then
   helm uninstall feeder 
   echo "Uninstalled Feeder"
@@ -62,4 +61,5 @@ elif [[ $operation == "uninstall" ]];then
   echo "Removed K8S Local PV"
   rm -rf /storage/local-storage-3
   echo "Removed K8S PV Storage on filesystem"
+  exit 0
 fi

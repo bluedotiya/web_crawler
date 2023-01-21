@@ -4,16 +4,10 @@ from flask import Flask, request, Response
 import requests
 import re
 import py2neo
-import debugpy # TODO REMOVE ALL DEBUG ONCE READY
 import os 
 
-# # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-debugpy.listen(("0.0.0.0", 5678))
-print("Waiting for debugger attach")
-debugpy.wait_for_client()
-
 # Global DNS Record
-# Should be 'neo4j.neo4j.svc.cluster.local:7687'
+# Should be 'neo4j.default.svc.cluster.local:7687'
 NEO4J_DNS_NAME = "neo4j.default.svc.cluster.local:7687"
 NEO4J_USERNAME = "neo4j"
 NEO4J_PASSWORD = "password"

@@ -1,3 +1,2 @@
 requests>=2.22.0
 py2neo
-debugpy #TODO REMOVE THIS
