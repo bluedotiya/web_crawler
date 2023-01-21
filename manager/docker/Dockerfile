@@ -5,7 +5,7 @@ ADD ./manager/docker/requirements.txt /app/requirements.txt
 RUN pip3 install -r /app/requirements.txt
 
 # Set FLASK application path
-ENV FLASK_APP=/app
+ENV FLASK_APP=/app:manager.py
 
 # Add python application files
 ADD ./manager/docker/manager.py /app/manager.py
