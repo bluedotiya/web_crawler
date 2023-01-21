@@ -24,8 +24,11 @@ echo "Helm repo updated"
 kubectl create namespace neo4j
 echo "Created neo4j Namespace"
 
-kubectl config set-context --current --namespace=neo4j
-echo "Switched to neo4j context"
+# kubectl config set-context --current --namespace=neo4j
+# echo "Switched to neo4j context"
 
-helm install neo4j neo4j/neo4j --namespace neo4j -f values.yaml
+helm install neo4j neo4j/neo4j -f values.yaml
 echo "Deployed neo4j using helm"
+
+helm install neo4j-expose . -f values.yaml
+echo "Deployed neo4j Expose (Nodeport expose)"

@@ -1,5 +1,5 @@
 neo4j:
-  name: my-standalone
+  name: crawler-neo4j
   resources:
     cpu: "0.5"
     memory: "2Gi"
@@ -16,9 +16,10 @@ volumes:
     volume:
       setOwnerAndGroupWritableFilePermissions: true
 
-# securityContext:
-#   fsGroup: 0
-#   fsGroupChangePolicy: Always
-#   runAsGroup: 0
-#   runAsNonRoot: false
-#   runAsUser: 0
+ports: 
+  - name: http
+    containerPort: 7474
+    nodeport: 30074
+  - name: db-port
+    containerPort: 7687
+    nodeport: 30087
