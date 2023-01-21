@@ -13,7 +13,7 @@ def send_data(user_input):
 
 def main():
     # Send good data
-    send_data({"url":"http://google.com"})
+    send_data({"url":"http://google.com", "depth":2})
     # Send bad format
     send_data({"urls":"http://google.com"})
     # Send bad url
@@ -22,6 +22,8 @@ def main():
     send_data({"url":["http://idontexist.wtfthesafda", "http://idontexist.wtfthesafda"]})
     # Send bad type 
     send_data(1)
+    # Send no depth
+    send_data({"url":"http://google.com"})
     
     
 if __name__ == '__main__':

@@ -8,9 +8,9 @@ import debugpy # TODO REMOVE ALL DEBUG ONCE READY
 import os 
 
 # # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-# debugpy.listen(("0.0.0.0", 5678))
-# print("Waiting for debugger attach")
-# debugpy.wait_for_client()
+debugpy.listen(("0.0.0.0", 5678))
+print("Waiting for debugger attach")
+debugpy.wait_for_client()
 
 # Global DNS Record
 # Should be 'neo4j.neo4j.svc.cluster.local:7687'
@@ -100,11 +100,12 @@ def index():
         return Response("{'Error':'Bad Json scheme'}", status=400, mimetype='application/json')
     # Check if client request json key is valid
     client_req = request.get_json()
-    if list(client_req.keys())[0] != "url":
-        return Response("{'Error':'url key was not found in json'}", status=400, mimetype='application/json')
+    if list(client_req.keys())[0] != "url" or list(client_req.keys())[1] != "depth":
+        return Response("{'Error':'url key or depth key was not found in json'}", status=400, mimetype='application/json')
 
     # Remove http/s Scheme from URL, take only Domain name
     requested_url = client_req['url']
+    requested_depth = client_req['depth']
     root_url, http_type = normalize_url(requested_url)
 
     # Check if the desired request was successful & Assign html content, request time to vars 
@@ -115,19 +116,19 @@ def index():
     extracted_urls = extract_page_data(request_html)
 
     # Check if URL Root is found on neo4j
-    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=4).first() is not None:
+    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     print("requested url is not on database, starting search! :)")
    
     # Get root node
     domain = get_domain_name(root_url)
-    root_node = py2neo.Node("ROOT", domain, http_type=http_type, name=root_url, requested_depth=4, request_time=request_time)
+    root_node = py2neo.Node("ROOT", domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls:
         domain = get_domain_name(url)
         norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node("URL", domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=4, current_depth=1, request_time=request_time)
+        url_node = py2neo.Node("URL", domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:

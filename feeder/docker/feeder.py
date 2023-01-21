@@ -96,7 +96,14 @@ def feeding(job, neo4j_connection_object):
     http_type = job.get('http_type')
     response = get_page_data(http_type + url)
     if response == ('', ''):
-        print(f"Request failed: {http_type + url}")
+        attempts_counter = job.get('attempts')
+        if attempts_counter is None:
+            attempts_counter = 0
+        print(f"Request failed: {http_type + url} -- Attempts: {attempts_counter}")
+        job['attempts'] = attempts_counter + 1
+        if attempts_counter > 2:
+            job['job_status'] = 'FAILED'
+        neo4j_connection_object.push(job)
         return False
     url_data, request_time = response
     extracted_url_list = extract_page_data(url_data)
