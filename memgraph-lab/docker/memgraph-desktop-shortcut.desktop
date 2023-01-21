@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Memgraph Lab
-Exec="/opt/Memgraph Lab/memgraph-lab" %U --no-sandbox
-Terminal=false
-Type=Application
-Icon=memgraph-lab
-StartupWMClass=Memgraph Lab
-Comment=Memgraph Lab as a module with frontend, backend and service components
-Categories=Development;
