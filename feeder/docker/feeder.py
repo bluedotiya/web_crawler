@@ -1,20 +1,25 @@
 import requests
 import re
-from gqlalchemy import Memgraph 
+from py2neo import Graph, NodeMatcher, Relationship, Node
 import random
 import time
+import os
 import debugpy # TODO REMOVE ALL DEBUG ONCE READY
 
 # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-debugpy.listen(5678)
-print("Waiting for debugger attach")
-debugpy.wait_for_client()
+# debugpy.listen(("0.0.0.0", 5678))
+# print("Waiting for debugger attach")
+# debugpy.wait_for_client()
 
 # Global DNS Record
-MEMGRAPH_DNS_NAME = "memgraph-0.memgraph-svc.default.svc.cluster.local"
+# Should be 'neo4j.neo4j.svc.cluster.local:7687'
+NEO4J_DNS_NAME = "neo4j.neo4j.svc.cluster.local:7687"
+NEO4J_USERNAME = "neo4j"
+NEO4J_PASSWORD = "password"
 
-# Global Redis connection obj
-db = Memgraph(host=MEMGRAPH_DNS_NAME, port=7687)
+# Global Neo4j connection obj
+graph = Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+
 
 def get_page_data(url):
     """
@@ -52,107 +57,97 @@ def extract_page_data(html_content):
     found_list = re.findall("(https?://[\w\-.]+)", html_content)
     return found_list
 
+def normalize_url(url):
+    url_upper = url.upper()
+    if 'HTTPS://' in url_upper:
+        return ((url_upper.replace('HTTPS://', '')).replace('WWW.', ''), 'HTTPS://')
+    else:
+        return ((url_upper.replace('HTTP://', '')).replace('WWW.', ''), 'HTTP://')
+
+def get_domain_name(url):
+    normalized_url, http_type = normalize_url(url)
+    splited_url = normalized_url.split('.')
+    counter = 2
+    while True:
+        shift_list = splited_url[-1:-counter:-1][-1::-1]
+        shift_url = '.'.join(shift_list)
+        response = os.system("nslookup " + shift_url + " > /dev/null 2>&1")
+        if response == 0:
+            return shift_list[0]
+        if counter >= 6:
+            return shift_list[0]
+        counter = counter + 1
+
+
 def random_sleep():
     time.sleep((random.randrange(1,10,1)))
 
-def check_redis_for_jobs(redis_connection_object):
+def fetch_neo4j_for_jobs(neo4j_connection_object):
     try:
-        available_keys = redis_connection_object.keys('*')
+        work_node = NodeMatcher(neo4j_connection_object).match("URL").where("_.current_depth <> _.requested_depth and _.job_status = 'PENDING'").first()
+        if work_node is None:
+            return (False, '')
     except:
-        return False, None
-    random.shuffle(available_keys)
-    for key in available_keys:
-        key_comp_list = key.decode('utf-8').split('_')
-        if key_comp_list[-1] == '0' and (key_comp_list[-3] != key_comp_list[-2]):
-            return True, key.decode('utf-8')
-    return False, None
+        return (False, '')
+    return (True, work_node)
+
+def feeding(job, neo4j_connection_object):
+    url = job.get('name')
+    http_type = job.get('http_type')
+    response = get_page_data(http_type + url)
+    if response == ('', ''):
+        print(f"Request failed: {http_type + url}")
+        return False
+    url_data, request_time = response
+    extracted_url_list = extract_page_data(url_data)
+    deduped_url_list = []
+    lead = Relationship.type("Lead")
+    relationship_tree = None
+
+    # Declare Job as in-progress
+    job['job_status'] = 'IN-PROGRESS'
+    neo4j_connection_object.push(job)
     
-def feeding(key, redis_connection_object):
-    normalized_master_url = ''
-    try:
-        url_set = redis_connection_object.smembers(key)
-    except:
-        return 1
-    for encoded_master_url in url_set:
-        master_url = encoded_master_url.decode('utf-8')
-        request_obj = get_page_data(master_url)[0]
+    # This loop, normalize the extracted url and also discards urls that are found in database
+    for url in extracted_url_list:
+        normalized_url = normalize_url(url)
+        database_nodes_list = NodeMatcher(neo4j_connection_object).match().all()
+        for node in database_nodes_list:
+            if normalized_url == node.get('name'):
+                break
+        deduped_url_list.append(normalized_url)
 
-        # Continue if request fails
-        if request_obj == '':
-            print("URL Request failed, Continuing")
-            continue
-        request_html = request_obj
-        extracted_urls = extract_page_data(request_html)
-
-        # Continue if no URLs were extracted
-        if extracted_urls.__len__() == 0:
-            print("URL Extraction failed, Continuing")
-            continue
-        
-        # Determine depths
-        key_comp_list = key.split('_')
-        curr_depth_indicator, req_depth = key_comp_list[1], key_comp_list[2]
-
-        # Determine Curr depth
-        if curr_depth_indicator == "ROOT":
-            curr_depth = 1
+    urls_set = set(deduped_url_list)
+    # This loop create node object for each url and connects it to the main url
+    for url in urls_set:
+        domain = get_domain_name(url[0])
+        url_node = Node("URL", domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        if relationship_tree is None:
+            relationship_tree = lead(job, url_node)
         else:
-            curr_depth = str(int(curr_depth_indicator) + 1)
+            relationship_tree = relationship_tree | lead(job, url_node) 
+    neo4j_connection_object.create(relationship_tree)
 
-        # Printing depths
-        print(f"Current Depth is: {curr_depth}")
-        print(f"Requested Depth is: {req_depth}")
+    # Change task status to completed
+    job['job_status'] = 'COMPLETED'
+    neo4j_connection_object.push(job)
+    return True
 
-        # Normalized master URL
-        master_url_list = (master_url.replace('https://', '')).replace('http://', '').split('.')
-        if master_url_list.__len__() == 2:
-            normalized_master_url = '.'.join(master_url_list)
-        if master_url_list.__len__() == 3:
-            normalized_master_url = ('.'.join(master_url_list[-1:-3:-1][-1:-3:-1])).upper()
-        else:
-            normalized_master_url = ('.'.join(master_url_list[-1:-4:-1][-1:-4:-1])).upper()
-        print(f"Normalized Master URL is: {normalized_master_url}")
-
-        ## Check if processed set exist
-        #try:
-        #    check_set_exist = redis_connection_object.exists(f"{normalized_master_url}_{curr_depth}_{req_depth}_*")
-        #except:
-        #    return 1
-#
-        #if check_set_exist != 0:
-        #    print(f"Proccessed URL was found on Redis, bummer")
-        #    continue
-
-        # Create new set, insert urls
-        for child_url in extracted_urls:
-            try:
-                redis_connection_object.sadd(f"{normalized_master_url}_{curr_depth}_{req_depth}_0", child_url)
-            except:
-                continue
-
-    # Change key job status to processed
-    key_comp_list[-1] = '1'
-    key_comp_list[0] = normalized_master_url
-    processed_key = '_'.join(key_comp_list)
-    while True:
-        output = redis_connection_object.rename(key, processed_key)
-        if output == 'OK':
-            break
-    
 
 
 def main():
     while(True):
         random_sleep()
-        continue
-        job_starter, job_name = check_redis_for_jobs(redis_obj)
-        if job_starter is False:
-            print("No Jobs found")
-            random_sleep()
+        job_found, work_node = fetch_neo4j_for_jobs(graph)
+        if job_found == False:
+            print("Job not found, Give me something to do")
             continue
-        print(f"Job Found : {job_name}")
-        feeding(job_name, redis_obj)
-        print("Feeding is Done!")
+        feed_result = feeding(work_node, graph)
+        if feed_result == False:
+            print("Something went wrong during feeding :(")
+            continue
+        print(f"Feed Cycle Completed for: {work_node.get('name')}")
+ 
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import requests
 import re
 import py2neo
 import debugpy # TODO REMOVE ALL DEBUG ONCE READY
+import os 
 
 # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
 debugpy.listen(("0.0.0.0", 5678))
@@ -53,35 +54,36 @@ def get_page_data(url):
 
 def extract_page_data(html_content):
     """
-    This function job is takes raw HTML Data and extracts URLs from it by using regex.
-    Extracts from the Raw HTML a list of URLs, and extracts it to a dict, output will always be a dict.
+    This function job is takes raw HTML Data and extracts URL's from it by using regex.
+    Extracts from the Raw HTML a list of URL's output will always be a list.
     Returns:
-        A dict containing the URLs extracted from the Raw HTML Data
+        A list containing the URL's extracted from the Raw HTML Data
     """
     found_list = re.findall("(https?://[\w\-.]+)", html_content)
-    response_dict = {'urls': found_list}
-    return response_dict
+    return found_list
 
 def normalize_url(url):
-    url_list = (url.replace('https://', '')).replace('http://', '').split('.')
-    if url_list.__len__() == 2:
-        return '.'.join(url_list).upper()
-    if url_list.__len__() == 3:
-        return ('.'.join(url_list[-1:-4:-1][-1:-4:-1])).upper()
+    url_upper = url.upper()
+    if 'HTTPS://' in url_upper:
+        return ((url_upper.replace('HTTPS://', '')).replace('WWW.', ''), 'HTTPS://')
     else:
-        return ('.'.join(url_list[-1:-5:-1][-1:-5:-1])).upper()
+        return ((url_upper.replace('HTTP://', '')).replace('WWW.', ''), 'HTTP://')
+    
+    
+def get_domain_name(url):
+    normalized_url, http_type = normalize_url(url)
+    splited_url = normalized_url.split('.')
+    counter = 2
+    while True:
+        shift_list = splited_url[-1:-counter:-1][-1::-1]
+        shift_url = '.'.join(shift_list)
+        response = os.system("ping -c 1 -w2 " + shift_url + " > /dev/null 2>&1")
+        if response == 0:
+            return shift_list[0]
+        if counter >= 6:
+            return shift_list[0]
+        counter = counter + 1
 
-def get_domain_name(normalized_url):
-    with open('/app/iana_top_level_domains.txt', 'r') as iana:
-        splited_url = normalized_url.split('.')
-        for top_domain in iana:
-            try:
-                splited_url.remove(top_domain.replace('\n', '').upper())
-                if splited_url.__len__() == 2 or splited_url.__len__() == 1:
-                    return splited_url[-1]
-            except ValueError:
-                continue
-        return splited_url[-1]
 
 
 
@@ -103,7 +105,7 @@ def index():
 
     # Remove http/s Scheme from URL, take only Domain name
     requested_url = client_req['url']
-    root_url = normalize_url(requested_url)
+    root_url, http_type = normalize_url(requested_url)
 
     # Check if the desired request was successful & Assign html content, request time to vars 
     request_obj = get_page_data(client_req['url'])
@@ -113,19 +115,19 @@ def index():
     extracted_urls = extract_page_data(request_html)
 
     # Check if URL Root is found on neo4j
-    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=2).first() is not None:
+    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=4).first() is not None:
        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     print("requested url is not on database, starting search! :)")
    
     # Get root node
     domain = get_domain_name(root_url)
-    root_node = py2neo.Node("ROOT", domain, name=root_url, requested_depth=2, request_time=request_time)
+    root_node = py2neo.Node("ROOT", domain, http_type=http_type, name=root_url, requested_depth=4, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
-    for url in extracted_urls['urls']:
+    for url in extracted_urls:
         domain = get_domain_name(url)
-        norm_url = normalize_url(url)
-        url_node = py2neo.Node("URL", domain, name=norm_url, requested_depth=2, current_depth=1, request_time=request_time)
+        norm_url, http_type = normalize_url(url)
+        url_node = py2neo.Node("URL", domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=4, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:
