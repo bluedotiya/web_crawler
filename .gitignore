@@ -8,3 +8,5 @@ tests/
 .idea/
 *dev-build*
 *dev-pod*
+*dev-refresh-app.sh*
+*dev_values.yaml*

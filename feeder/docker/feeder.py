@@ -13,7 +13,7 @@ import debugpy # TODO REMOVE ALL DEBUG ONCE READY
 
 # Global DNS Record
 # Should be 'neo4j.neo4j.svc.cluster.local:7687'
-NEO4J_DNS_NAME = "neo4j.neo4j.svc.cluster.local:7687"
+NEO4J_DNS_NAME = "neo4j.default.svc.cluster.local:7687"
 NEO4J_USERNAME = "neo4j"
 NEO4J_PASSWORD = "password"
 
