@@ -1,16 +1,10 @@
 import json
 import jsonschema
-from flask import Flask, request, Response, render_template
+from flask import Flask, request, Response
 import requests
 import re
 import py2neo
-import debugpy # TODO : Remove this
 import os 
-
-# # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
-debugpy.listen(("0.0.0.0", 5678))
-print("Waiting for debugger attach")
-debugpy.wait_for_client()
 
 # Global DNS Record
 # Should be 'neo4j.default.svc.cluster.local:7687'
@@ -85,18 +79,9 @@ def get_domain_name(url):
         counter = counter + 1
 
 
-@app.route('/')
-def form():
-    return render_template('index.html')
-
-@app.route("/data", methods=['POST'])
-def show_result():
-    result = request.form
-    print(result)
-    # requests.post(url='http://localhost:80/api', data=data)
 
 
-@app.route('/api', methods=['POST'])
+@app.route('/', methods=['POST'])
 def index():
     # Check client request header is json
     if not request.is_json:
@@ -146,6 +131,3 @@ def index():
 
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
-
-
-app.run(host='0.0.0.0', port=80)
