@@ -110,13 +110,13 @@ def index():
     extracted_urls = extract_page_data(request_html)
 
     # Check if URL Root is found on neo4j
-    if py2neo.NodeMatcher(graph).match(node_type="ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
+    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     print("requested url is not on database, starting search! :)")
    
     # Get root node
     domain, ip, _ = get_network_stats(root_url)
-    root_node = py2neo.Node(node_type="ROOT", ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
+    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls:
@@ -124,7 +124,7 @@ def index():
         if return_code == False:
             continue
         norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node(node_type="URL", ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
+        url_node = py2neo.Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:

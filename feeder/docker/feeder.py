@@ -96,7 +96,7 @@ def random_sleep():
 
 def fetch_neo4j_for_jobs(neo4j_connection_object):
     try:
-        work_node = NodeMatcher(neo4j_connection_object).match().where("_.current_depth <> _.requested_depth and _.job_status = 'PENDING' and _.node_type = 'URL'").first()
+        work_node = NodeMatcher(neo4j_connection_object).match("URL").where("_.current_depth <> _.requested_depth and _.job_status = 'PENDING'").first()
         if work_node is None:
             return (False, '')
     except:
@@ -143,7 +143,7 @@ def feeding(job, neo4j_connection_object):
         if return_code == False:
             print(f"Error: URL:{url} -- FAILED")
             continue
-        url_node = Node(node_type="URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        url_node = Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(job, url_node)
         else:
