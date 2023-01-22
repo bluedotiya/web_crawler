@@ -14,8 +14,6 @@ NEO4J_PASSWORD = "password"
 # Global Neo4j connection obj
 graph = Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
-# API Key for IP2GEO
-api_key = "2041d7745adb429d93fe8c3078610e0a"
 
 def run_health_check(neo4j_connection_object):
     try:
@@ -87,13 +85,9 @@ def get_network_stats(url):
         response = subprocess.run(['nslookup', shift_url], capture_output=True)
         if response.returncode == 0:
             ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
-            try:
-                country = requests.get(f"https://api.ipgeolocation.io/ipgeo?apiKey={api_key}&ip={ipv4}").json()['country_code3']
-            except Exception:
-                country = "Unknown"
-            return shift_list[0], ipv4, country, True
+            return shift_list[0], ipv4, True
         if counter >= 6:
-            return _, _, "Unknown", False
+            return _, _, False
         counter = counter + 1
 
 
@@ -145,11 +139,11 @@ def feeding(job, neo4j_connection_object):
     urls_set = set(deduped_url_list)
     # This loop create node object for each url and connects it to the main url
     for url in urls_set:
-        domain, ip, country, return_code = get_network_stats(url[0])
+        domain, ip, return_code = get_network_stats(url[0])
         if return_code == False:
             print(f"Error: URL:{url} -- FAILED")
             continue
-        url_node = Node("URL", country, ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        url_node = Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(job, url_node)
         else:
