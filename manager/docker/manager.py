@@ -15,6 +15,9 @@ NEO4J_PASSWORD = "password"
 # Global Neo4j connection obj
 graph = py2neo.Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
+# API Key for IP2GEO
+api_key = "2041d7745adb429d93fe8c3078610e0a"
+
 # Global Flask server obj
 app = Flask(__name__)
 
@@ -75,9 +78,13 @@ def get_network_stats(url):
         response = subprocess.run(['nslookup', shift_url], capture_output=True)
         if response.returncode == 0:
             ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
-            return shift_list[0], ipv4, True
+            try:
+                country = requests.get(f"https://api.ipgeolocation.io/ipgeo?apiKey={api_key}&ip={ipv4}").json()['country_code3']
+            except Exception:
+                country = "Unknown"
+            return shift_list[0], ipv4, country, True
         if counter >= 6:
-            return _, _, False
+            return _, _, "Unknown", False
         counter = counter + 1
         
 
@@ -115,16 +122,16 @@ def index():
     print("requested url is not on database, starting search! :)")
    
     # Get root node
-    domain, ip, _ = get_network_stats(root_url)
-    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
+    domain, ip, country, _ = get_network_stats(root_url)
+    root_node = py2neo.Node("ROOT", country, ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls:
-        domain, ip, return_code = get_network_stats(url)
+        domain, ip, country, return_code = get_network_stats(url)
         if return_code == False:
             continue
         norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
+        url_node = py2neo.Node("URL", country, ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:

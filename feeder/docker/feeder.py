@@ -14,6 +14,8 @@ NEO4J_PASSWORD = "password"
 # Global Neo4j connection obj
 graph = Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
+# API Key for IP2GEO
+api_key = "2041d7745adb429d93fe8c3078610e0a"
 
 def run_health_check(neo4j_connection_object):
     try:
@@ -85,9 +87,13 @@ def get_network_stats(url):
         response = subprocess.run(['nslookup', shift_url], capture_output=True)
         if response.returncode == 0:
             ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
-            return shift_list[0], ipv4, True
+            try:
+                country = requests.get(f"https://api.ipgeolocation.io/ipgeo?apiKey={api_key}&ip={ipv4}").json()['country_code3']
+            except Exception:
+                country = "Unknown"
+            return shift_list[0], ipv4, country, True
         if counter >= 6:
-            return _, _, False
+            return _, _, "Unknown", False
         counter = counter + 1
 
 

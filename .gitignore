@@ -10,3 +10,4 @@ tests/
 *dev-pod*
 *dev-refresh-app.sh*
 *dev_values.yaml*
+*secret*
