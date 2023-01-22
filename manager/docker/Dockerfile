@@ -10,6 +10,8 @@ ENV FLASK_APP=/app:manager.py
 # Add python application files
 ADD ./manager/docker/manager.py /app/manager.py
 ADD ./manager/docker/manager_test.py /app/manager_test.py
-ADD ./manager/docker/index.html /app/index.html
+RUN mkdir -p /app/templates
+ADD ./manager/docker/index.html /app/templates/index.html
+ADD ./manager/docker/data.html /app/templates/data.html
 
 ENTRYPOINT ["/usr/local/bin/python3", "/app/manager.py"]
