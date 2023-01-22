@@ -83,7 +83,12 @@ def get_domain_name(url):
 def form():
     return render_template('index.html')
 
-@app.route('/data', methods=['POST'])
+@app.route("/data", methods=['POST'])
+def show_result():
+    result = request.form
+    return render_template('data.html', result=result)
+
+@app.route('/api', methods=['POST'])
 def index():
     # Check client request header is json
     if not request.is_json:
