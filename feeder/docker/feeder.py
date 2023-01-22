@@ -145,11 +145,11 @@ def feeding(job, neo4j_connection_object):
     urls_set = set(deduped_url_list)
     # This loop create node object for each url and connects it to the main url
     for url in urls_set:
-        domain, ip, return_code = get_network_stats(url[0])
+        domain, ip, country, return_code = get_network_stats(url[0])
         if return_code == False:
             print(f"Error: URL:{url} -- FAILED")
             continue
-        url_node = Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        url_node = Node("URL", country, ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(job, url_node)
         else:
