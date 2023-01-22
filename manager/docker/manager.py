@@ -86,7 +86,9 @@ def form():
 @app.route("/data", methods=['POST'])
 def show_result():
     result = request.form
-    return render_template('data.html', result=result)
+    print(result)
+    # requests.post(url='http://localhost:80/api', data=data)
+
 
 @app.route('/api', methods=['POST'])
 def index():
