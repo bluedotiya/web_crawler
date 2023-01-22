@@ -150,6 +150,7 @@ def feeding(job, neo4j_connection_object):
             relationship_tree = relationship_tree | lead(job, url_node)
     if relationship_tree is None:
         job['job_status'] = 'FAILED'
+        neo4j_connection_object.push(job)
         return False
     neo4j_connection_object.create(relationship_tree)
 
