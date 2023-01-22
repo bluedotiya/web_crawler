@@ -116,13 +116,13 @@ def index():
    
     # Get root node
     domain = get_domain_name(root_url)
-    root_node = py2neo.Node("ROOT", domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
+    root_node = py2neo.Node("ROOT", domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls:
         domain = get_domain_name(url)
         norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node("URL", domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
+        url_node = py2neo.Node("URL", domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:

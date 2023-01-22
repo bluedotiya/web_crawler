@@ -122,7 +122,7 @@ def feeding(job, neo4j_connection_object):
     # This loop create node object for each url and connects it to the main url
     for url in urls_set:
         domain = get_domain_name(url[0])
-        url_node = Node("URL", domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        url_node = Node("URL", domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(job, url_node)
         else:
