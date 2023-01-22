@@ -3,7 +3,7 @@ import re
 from py2neo import Graph, NodeMatcher, Relationship, Node
 import random
 import time
-import os
+import subprocess
 
 # Global DNS Record
 # Should be 'neo4j.default.svc.cluster.local:7687'
@@ -58,18 +58,20 @@ def normalize_url(url):
     else:
         return ((url_upper.replace('HTTP://', '')).replace('WWW.', ''), 'HTTP://')
 
-def get_domain_name(url):
-    normalized_url, http_type = normalize_url(url)
+def get_network_stats(url):
+    ipv4_pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+    normalized_url, _ = normalize_url(url)
     splited_url = normalized_url.split('.')
     counter = 2
     while True:
         shift_list = splited_url[-1:-counter:-1][-1::-1]
         shift_url = '.'.join(shift_list)
-        response = os.system("nslookup " + shift_url + " > /dev/null 2>&1")
-        if response == 0:
-            return shift_list[0]
+        response = subprocess.run(['nslookup', shift_url], capture_output=True)
+        if response.returncode == 0:
+            ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
+            return shift_list[0], ipv4, True
         if counter >= 6:
-            return shift_list[0]
+            return _, _, False
         counter = counter + 1
 
 
@@ -121,8 +123,10 @@ def feeding(job, neo4j_connection_object):
     urls_set = set(deduped_url_list)
     # This loop create node object for each url and connects it to the main url
     for url in urls_set:
-        domain = get_domain_name(url[0])
-        url_node = Node("URL", domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
+        domain, ip, return_code = get_network_stats(url[0])
+        if return_code == False:
+            continue
+        url_node = Node(node_type="URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(job, url_node)
         else:

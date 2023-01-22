@@ -4,7 +4,7 @@ from flask import Flask, request, Response
 import requests
 import re
 import py2neo
-import os 
+import subprocess
 
 # Global DNS Record
 # Should be 'neo4j.default.svc.cluster.local:7687'
@@ -64,22 +64,22 @@ def normalize_url(url):
         return ((url_upper.replace('HTTP://', '')).replace('WWW.', ''), 'HTTP://')
     
     
-def get_domain_name(url):
-    normalized_url, http_type = normalize_url(url)
+def get_network_stats(url):
+    ipv4_pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
+    normalized_url, _ = normalize_url(url)
     splited_url = normalized_url.split('.')
     counter = 2
     while True:
         shift_list = splited_url[-1:-counter:-1][-1::-1]
         shift_url = '.'.join(shift_list)
-        response = os.system("ping -c 1 -w2 " + shift_url + " > /dev/null 2>&1")
-        if response == 0:
-            return shift_list[0]
+        response = subprocess.run(['nslookup', shift_url], capture_output=True)
+        if response.returncode == 0:
+            ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
+            return shift_list[0], ipv4, True
         if counter >= 6:
-            return shift_list[0]
+            return _, _, False
         counter = counter + 1
-
-
-
+        
 
 @app.route('/', methods=['POST'])
 def index():
@@ -115,14 +115,16 @@ def index():
     print("requested url is not on database, starting search! :)")
    
     # Get root node
-    domain = get_domain_name(root_url)
-    root_node = py2neo.Node("ROOT", domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
+    domain, ip, _ = get_network_stats(root_url)
+    root_node = py2neo.Node(node_type="ROOT", ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
     lead = py2neo.Relationship.type("Lead")
     relationship_tree = None
     for url in extracted_urls:
-        domain = get_domain_name(url)
+        domain, ip, return_code = get_network_stats(url)
+        if return_code == False:
+            continue
         norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node("URL", domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
+        url_node = py2neo.Node(node_type="URL", ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
         if relationship_tree is None:
             relationship_tree = lead(root_node, url_node)
         else:
