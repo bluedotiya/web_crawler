@@ -15,6 +15,22 @@ NEO4J_PASSWORD = "password"
 graph = Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
 
 
+def run_health_check(neo4j_connection_object):
+    try:
+        neo4j_connection_object.run("Match () Return 1 Limit 1")
+        return True
+    except Exception:
+        print("Warning: Database connection degraded")
+        return False
+
+def restore_db_connection():
+    graph = Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
+    try:
+        graph.run("Match () Return 1 Limit 1")
+        print("Info: Database connection restored")
+    except Exception:
+        random_sleep()
+
 def get_page_data(url):
     """
     Takes a URL and return its website html content
@@ -142,6 +158,8 @@ def feeding(job, neo4j_connection_object):
 
 def main():
     while(True):
+        while(run_health_check(graph) == False):
+            restore_db_connection()
         random_sleep()
         job_found, work_node = fetch_neo4j_for_jobs(graph)
         if job_found == False:
