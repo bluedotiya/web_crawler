@@ -80,7 +80,7 @@ def random_sleep():
 
 def fetch_neo4j_for_jobs(neo4j_connection_object):
     try:
-        work_node = NodeMatcher(neo4j_connection_object).match("URL").where("_.current_depth <> _.requested_depth and _.job_status = 'PENDING'").first()
+        work_node = NodeMatcher(neo4j_connection_object).match().where("_.current_depth <> _.requested_depth and _.job_status = 'PENDING' and _.node_type = 'URL'").first()
         if work_node is None:
             return (False, '')
     except:

@@ -110,7 +110,7 @@ def index():
     extracted_urls = extract_page_data(request_html)
 
     # Check if URL Root is found on neo4j
-    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
+    if py2neo.NodeMatcher(graph).match(node_type="ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     print("requested url is not on database, starting search! :)")
    
