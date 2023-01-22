@@ -1,5 +1,20 @@
-<form action="/data" method = "POST">
-    <p>URL: <input type = "url" name = "url" /></p>
-    <p>Depth: <input type = "number" name = "depth" /></p>
-    <p><input type = "submit" value = "Submit" /></p>
-</form>
+<form id="manager" action="/data" method = "POST">
+    <h1>Manager - Start job menu</h1>
+    <section>
+      <p>
+        <label for="url">
+          <span>URL: </span>
+          <strong><abbr title="required"></abbr></strong>
+        </label>
+        <input type="url" id="url-id" name="url" />
+      </p>
+      <p>
+        <label for="depth">
+          <span>Search Depth: </span>
+          <strong><abbr title="required"></abbr></strong>
+        </label>
+        <input type="depth" id="depth" name="depth" />
+      </p>
+      <p><button type="submit">Submit Form</button></p>
+    </section>
+  </form>
