@@ -133,3 +133,6 @@ def index():
 
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
+
+
+app.run(host='0.0.0.0', port=80)
