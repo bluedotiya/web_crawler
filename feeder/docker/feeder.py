@@ -103,42 +103,57 @@ def fetch_neo4j_for_jobs(neo4j_connection_object):
         return (False, '')
     return (True, work_node)
 
+def validate_job( current_job, neo4j_connection_object):
+    # Get Website HTML content from URL
+    url = current_job.get('name')
+    http_type = current_job.get('http_type')
+    page_data_response = get_page_data(http_type + url)
+    url_data, request_time = page_data_response
+    if page_data_response != ('', ''):
+        return True, url_data, request_time
+    
+    # Failure code block, Website HTML Fetch failed, adding attempts counter
+    attempts_counter = current_job.get('attempts')
+    if attempts_counter is None:
+        attempts_counter = 0
+    current_job['attempts'] = attempts_counter + 1
+    print(f"Request failed: {http_type + url} -- Attempts: {attempts_counter}")
+
+    # Failure code block, giving up on URL request after 3 failed attempts
+    if attempts_counter > 2:
+        current_job['job_status'] = 'FAILED'
+        print(f"Failure limit reached! Giving up on f{http_type + url} after f{attempts_counter} attempts.")
+    
+    # Pushing any changes to DB
+    neo4j_connection_object.push(current_job)
+    return False
+
 def feeding(job, neo4j_connection_object):
-    url = job.get('name')
-    http_type = job.get('http_type')
-    response = get_page_data(http_type + url)
-    if response == ('', ''):
-        attempts_counter = job.get('attempts')
-        if attempts_counter is None:
-            attempts_counter = 0
-        print(f"Request failed: {http_type + url} -- Attempts: {attempts_counter}")
-        job['attempts'] = attempts_counter + 1
-        if attempts_counter > 2:
-            job['job_status'] = 'FAILED'
-        neo4j_connection_object.push(job)
+    # Validate Job is Ok
+    return_code, url_data, request_time = validate_job(job, neo4j_connection_object)
+    if return_code == False:
         return False
-    url_data, request_time = response
-    extracted_url_list = extract_page_data(url_data)
-    deduped_url_list = []
-    lead = Relationship.type("Lead")
-    relationship_tree = None
 
     # Declare Job as in-progress
     job['job_status'] = 'IN-PROGRESS'
     neo4j_connection_object.push(job)
-    
-    # This loop, normalize the extracted url and also discards urls that are found in database
-    for url in extracted_url_list:
-        normalized_url = normalize_url(url)
-        database_nodes_list = NodeMatcher(neo4j_connection_object).match().all()
-        for node in database_nodes_list:
-            if normalized_url == node.get('name'):
-                break
-        deduped_url_list.append(normalized_url)
 
-    urls_set = set(deduped_url_list)
+    extracted_url_list = extract_page_data(url_data)
+    lead = Relationship.type("Lead")
+    relationship_tree = None
+
+    # Get all DB Nodes
+    database_nodes_list = NodeMatcher(neo4j_connection_object).match().all()
+    # Normalize all URLs extracted from page
+    normalized_urls_set = {normalize_url(url) for url in extracted_url_list}
+    # Create a set of all DB nodes with only node names
+    database_nodes_names_set = {node.get('name') for node in database_nodes_list}
+    
+    # Create a set that contains new URLs that are not in database
+    unique_urls_set = normalized_urls_set.difference_update(database_nodes_names_set)
+    
     # This loop create node object for each url and connects it to the main url
-    for url in urls_set:
+    for url in unique_urls_set:
         domain, ip, return_code = get_network_stats(url[0])
         if return_code == False:
             print(f"Error: URL:{url} -- FAILED")
@@ -168,13 +183,13 @@ def main():
         random_sleep()
         job_found, work_node = fetch_neo4j_for_jobs(graph)
         if job_found == False:
-            print("Job not found, Give me something to do")
+            print("Info: Job not found, Give me something to do")
             continue
         feed_result = feeding(work_node, graph)
         if feed_result == False:
-            print("Something went wrong during feeding :(")
+            print("Error: Something went wrong during feeding :(")
             continue
-        print(f"Feed Cycle Completed for: {work_node.get('name')}")
+        print(f"Info: Feed Cycle Completed for: {work_node.get('name')}")
  
 
 
