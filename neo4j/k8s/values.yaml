@@ -1,0 +1,25 @@
+neo4j:
+  name: crawler-neo4j
+  resources:
+    cpu: "0.5"
+    memory: "2Gi"
+
+  # Uncomment to set the initial password
+  password: "password"
+
+volumes:
+  data:
+    mode: defaultStorageClass
+    defaultStorageClass:
+      requests:
+        storage: 2Gi
+    volume:
+      setOwnerAndGroupWritableFilePermissions: true
+
+ports: 
+  - name: http
+    containerPort: 7474
+    nodeport: 30074
+  - name: db-port
+    containerPort: 7687
+    nodeport: 30087
