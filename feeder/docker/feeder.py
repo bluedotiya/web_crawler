@@ -111,19 +111,16 @@ def validate_job( current_job, neo4j_connection_object):
     url_data, request_time = page_data_response
     if page_data_response != ('', ''):
         return True, url_data, request_time
-    
     # Failure code block, Website HTML Fetch failed, adding attempts counter
     attempts_counter = current_job.get('attempts')
     if attempts_counter is None:
         attempts_counter = 0
     current_job['attempts'] = attempts_counter + 1
     print(f"Request failed: {http_type + url} -- Attempts: {attempts_counter}")
-
     # Failure code block, giving up on URL request after 3 failed attempts
     if attempts_counter > 2:
         current_job['job_status'] = 'FAILED'
         print(f"Failure limit reached! Giving up on f{http_type + url} after f{attempts_counter} attempts.")
-    
     # Pushing any changes to DB
     neo4j_connection_object.push(current_job)
     return False
@@ -145,22 +142,21 @@ def feeding(job, neo4j_connection_object):
     # Get all DB Nodes
     database_nodes_list = NodeMatcher(neo4j_connection_object).match().all()
     # Normalize all URLs extracted from page
-    normalized_urls_set = {normalize_url(url) for url in extracted_url_list}
+    upper_urls_set = {url.upper() for url in extracted_url_list}
     # Create a set of all DB nodes with only node names
-    database_nodes_names_set = {node.get('name') for node in database_nodes_list}
+    database_nodes_names_set = {node.get('http_type') + node.get('name') for node in database_nodes_list}
     
-    # Create a set that contains new URLs that are not in database
-    unique_urls_set = normalized_urls_set.difference_update(database_nodes_names_set)
+    # Removes all URLs that are found on database
+    upper_urls_set -= database_nodes_names_set
 
-    if unique_urls_set.__len__() == 0:
+    if upper_urls_set.__len__() == 0:
         print(f"Warning: No new URLs found in: {job.get('name')}")
         job['job_status'] = 'COMPLETED'
         neo4j_connection_object.push(job)
         return True
 
-    
     # This loop create node object for each url and connects it to the main url
-    for url in unique_urls_set:
+    for url in {normalize_url(url) for url in upper_urls_set}:
         domain, ip, return_code = get_network_stats(url[0])
         if return_code == False:
             print(f"Error: URL:{url} -- FAILED")
