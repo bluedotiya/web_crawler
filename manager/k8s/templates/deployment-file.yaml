@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.app }}
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app }}
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app }}
+        track: stable
+    spec:
+      containers:
+        - name: {{ .Values.app }}
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports: 
+          {{- range .Values.ports }} 
+            - containerPort: {{ .containerPort }}
+          {{- end }}    

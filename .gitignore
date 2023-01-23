@@ -1,4 +1,13 @@
-# Default ignored files
+.vscode/settings.json
 /shelf/
 /workspace.xml
-__py*
+.pytest*
+.vscode
+__pycache__
+tests/
+.idea/
+*dev-build*
+*dev-pod*
+*dev-refresh-app.sh*
+*dev_values.yaml*
+*secret*
