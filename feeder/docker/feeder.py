@@ -92,7 +92,7 @@ def get_network_stats(url):
 
 
 def random_sleep():
-    time.sleep((random.randrange(1,10,1)))
+    time.sleep((random.randrange(1,5,1)))
 
 def fetch_neo4j_for_jobs(neo4j_connection_object):
     try:
@@ -116,11 +116,11 @@ def validate_job( current_job, neo4j_connection_object):
     if attempts_counter is None:
         attempts_counter = 0
     current_job['attempts'] = attempts_counter + 1
-    print(f"Request failed: {http_type + url} -- Attempts: {attempts_counter}")
+    print(f"Warning: Request failed: {http_type + url} -- Attempts: {attempts_counter}")
     # Failure code block, giving up on URL request after 3 failed attempts
     if attempts_counter > 2:
         current_job['job_status'] = 'FAILED'
-        print(f"Failure limit reached! Giving up on f{http_type + url} after f{attempts_counter} attempts.")
+        print(f"Error: Failure limit reached! Giving up on {http_type + url} after{attempts_counter} attempts.")
     # Pushing any changes to DB
     neo4j_connection_object.push(current_job)
     return False, None, None
@@ -159,7 +159,7 @@ def feeding(job, neo4j_connection_object):
     for url in {normalize_url(url) for url in upper_urls_set}:
         domain, ip, return_code = get_network_stats(url[0])
         if return_code == False:
-            print(f"Error: URL:{url} -- FAILED")
+            print(f"Error: URL: {url[0]} -- FAILED")
             continue
         url_node = Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=url[1], name=url[0], requested_depth=job.get('requested_depth'), current_depth=(job.get('current_depth') + 1), request_time=request_time)
         if relationship_tree is None:
