@@ -123,7 +123,7 @@ def validate_job( current_job, neo4j_connection_object):
         print(f"Failure limit reached! Giving up on f{http_type + url} after f{attempts_counter} attempts.")
     # Pushing any changes to DB
     neo4j_connection_object.push(current_job)
-    return False
+    return False, None, None
 
 def feeding(job, neo4j_connection_object):
     # Validate Job is Ok
