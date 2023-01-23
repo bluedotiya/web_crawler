@@ -151,6 +151,13 @@ def feeding(job, neo4j_connection_object):
     
     # Create a set that contains new URLs that are not in database
     unique_urls_set = normalized_urls_set.difference_update(database_nodes_names_set)
+
+    if unique_urls_set.__len__() == 0:
+        print(f"Warning: No new URLs found in: {job.get('name')}")
+        job['job_status'] = 'COMPLETED'
+        neo4j_connection_object.push(job)
+        return True
+
     
     # This loop create node object for each url and connects it to the main url
     for url in unique_urls_set:
