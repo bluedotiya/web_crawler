@@ -30,6 +30,7 @@ Example: Deployment Done you can connect Neo4j Browser on: http://<YOUR_K8S_NODE
 Example: Database Port is: 30087
 ```
 
+
 ### How to use
 1. To init a search run the following query (you can replace url & depth values to your own)
 ```
