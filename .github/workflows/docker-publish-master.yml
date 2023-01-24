@@ -1,4 +1,4 @@
-name: master - Build & publish containers
+name: Docker Build 
 on:
   release:
     types: [published]
