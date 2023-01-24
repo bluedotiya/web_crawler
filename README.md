@@ -41,6 +41,7 @@ curl -X POST http://<YOUR_K8S_NODE_IP_HERE>:30080 -H 'Content-Type: application/
 Use Neo4j Desktop app along side GraphXR for the best graph viewing and search experience
 
 GraphXR Visualization:
+![image](https://user-images.githubusercontent.com/75704012/214429032-f19d2bb0-e09b-470e-94b2-faa925c3be59.png)
 
 
 ## Legacy crawler
