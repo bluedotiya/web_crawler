@@ -5,7 +5,7 @@ Recursive WebCrawler, Feed it one URL and the crawler will return all the websit
 K8s Flavor of web crawler is custom built to serve as a native k8s app, its provide scalability, stability and high performance.
 
 ### Installation prerequisites
-1. Apt package: setfacl
+1. Apt packages: setfacl, git
 2. Kubectl cli
 3. Helm cli
 4. Single/multi node K8s cluster (tested on Kubeadm)
