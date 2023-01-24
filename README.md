@@ -1,3 +1,4 @@
+![example workflow](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml/badge.svg)
 # Python web crawler
 Recursive WebCrawler, Feed it one URL and the crawler will return all the websites that are related to that address at a chosen depth
 
