@@ -46,16 +46,6 @@ def get_page_data(url):
         return str(html_content), elapsed
 
 
-def extract_page_data(html_content):
-    """
-    This function job is takes raw HTML Data and extracts URL's from it by using regex.
-    Extracts from the Raw HTML a list of URL's output will always be a list.
-    Returns:
-        A list containing the URL's extracted from the Raw HTML Data
-    """
-    found_list = re.findall("(https?://[\w\-.]+)", html_content)
-    return found_list
-
 def normalize_url(url):
     url_upper = url.upper()
     if 'HTTPS://' in url_upper:
@@ -106,8 +96,6 @@ def index():
     request_obj = get_page_data(client_req['url'])
     if request_obj == ('', ''):
         return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
-    request_html, request_time = request_obj
-    extracted_urls = extract_page_data(request_html)
 
     # Check if URL Root is found on neo4j
     if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
@@ -116,20 +104,7 @@ def index():
    
     # Get root node
     domain, ip, _ = get_network_stats(root_url)
-    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, request_time=request_time)
-    lead = py2neo.Relationship.type("Lead")
-    relationship_tree = None
-    for url in extracted_urls:
-        domain, ip, return_code = get_network_stats(url)
-        if return_code == False:
-            continue
-        norm_url, http_type = normalize_url(url)
-        url_node = py2neo.Node("URL", ip=ip, domain=domain, job_status="PENDING", http_type=http_type, name=norm_url, requested_depth=requested_depth, current_depth=1, request_time=request_time)
-        if relationship_tree is None:
-            relationship_tree = lead(root_node, url_node)
-        else:
-            relationship_tree = relationship_tree | lead(root_node, url_node) 
-    graph.create(relationship_tree)
-
+    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, job_status='PENDING', http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0)
+    graph.create(root_node)
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
