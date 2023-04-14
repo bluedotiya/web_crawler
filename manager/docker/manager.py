@@ -36,8 +36,12 @@ def get_page_data(url):
         Failed request:
         ('', '')
     """
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0'
+    }
     try:
-        response = requests.get(url, timeout=1)
+
+        response = requests.get(url, timeout=1, headers=headers)
     except:
         return '', ''
     else:
@@ -63,7 +67,7 @@ def get_network_stats(url):
         shift_list = splited_url[-1:-counter:-1][-1::-1]
         shift_url = '.'.join(shift_list)
         response = subprocess.run(['nslookup', shift_url], capture_output=True)
-        if response.returncode == 0:
+        if response.returncode == 0 and "**" not in response.stdout.decode('utf-8'):
             ipv4 = ipv4_pattern.findall(response.stdout.decode('utf-8'))[-1]
             return shift_list[0], ipv4, True
         if counter >= 6:
@@ -78,18 +82,30 @@ def index():
         return Response("{'Error':'Only json data is allowed'}", status=400, mimetype='application/json')
     # Validate client request json scheme
     try:
-        schema = {"type": "object", "properties": {"url": {"type": "string"}, "depth": {"type": "integer"}}}
+        schema = {"type": "object", "properties": {"url": {"type": "string"}, "depth": {"type": "integer"}, "mode": {"type": "string"}}}
         jsonschema.validate(request.get_json(), schema)
     except jsonschema.exceptions.ValidationError:
         return Response("{'Error':'Bad Json scheme'}", status=400, mimetype='application/json')
     # Check if client request json key is valid
     client_req = request.get_json()
-    if list(client_req.keys())[0] != "url" or list(client_req.keys())[1] != "depth":
-        return Response("{'Error':'url key or depth key was not found in json'}", status=400, mimetype='application/json')
+    if list(client_req.keys())[0] != "url" or list(client_req.keys())[1] != "depth" or list(client_req.keys())[2] != "mode":
+        return Response("{'Error':'url, depth or mode key were not found in json'}", status=400, mimetype='application/json')
 
-    # Remove http/s Scheme from URL, take only Domain name
+    # Validate data types
     requested_url = client_req['url']
     requested_depth = client_req['depth']
+    requested_mode = client_req['mode']
+
+    if type(requested_url) is not str:
+        return Response("{'Error':'url key value in not string'}", status=400, mimetype='application/json')
+    if type(requested_depth) is not int:
+        return Response("{'Error':'depth key value in not a number'}", status=400, mimetype='application/json')
+    if type(requested_mode) is not str:
+        return Response("{'Error':'mode key value in not string'}", status=400, mimetype='application/json')
+    if requested_mode not in ['normal', 'domain']:
+        return Response("{'Error':'mode key value in not supported'}", status=400, mimetype='application/json')
+
+    # split http/s Scheme from URL
     root_url, http_type = normalize_url(requested_url)
 
     # Check if the desired request was successful & Assign html content, request time to vars 
@@ -98,13 +114,13 @@ def index():
         return Response("{'Error':'Requested URL was not found'}", status=404, mimetype='application/json')
 
     # Check if URL Root is found on neo4j
-    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth).first() is not None:
+    if py2neo.NodeMatcher(graph).match("ROOT", name=root_url, requested_depth=requested_depth, search_mode=requested_mode).first() is not None:
        return Response("{'Info':'requested url was already searched'}", status=200, mimetype='application/json')
     print("requested url is not on database, starting search! :)")
    
     # Get root node
     domain, ip, _ = get_network_stats(root_url)
-    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, job_status='PENDING', http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0)
+    root_node = py2neo.Node("ROOT", ip=ip, domain=domain, job_status='PENDING', http_type=http_type, name=root_url, requested_depth=requested_depth, current_depth=0, search_mode=requested_mode)
     graph.create(root_node)
     client_answer = json.dumps({'Success': 'Job started'}), "200"
     return client_answer
