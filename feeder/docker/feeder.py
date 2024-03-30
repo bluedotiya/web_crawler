@@ -59,8 +59,7 @@ def get_page_data(url, timeout=1):
         elapsed = response.elapsed
         return str(html_content), elapsed
     except:
-        return '', ''
-        
+        return '', ''      
 
 def extract_page_data(html_content):
     """
@@ -138,14 +137,15 @@ def validate_job( current_job, neo4j_connection_object):
     return False, None, None
 
 def feeding(job, neo4j_connection_object):
+
+    # Declare Job as in-progress - Prevents other workers from taking the same job
+    job['job_status'] = 'IN-PROGRESS'
+    neo4j_connection_object.push(job)
+
     # Validate Job is Ok
     return_code, url_data, request_time = validate_job(job, neo4j_connection_object)
     if return_code == False:
         return False
-
-    # Declare Job as in-progress
-    job['job_status'] = 'IN-PROGRESS'
-    neo4j_connection_object.push(job)
 
     extracted_url_list = extract_page_data(url_data)
     lead = Relationship.type("Lead")
@@ -226,20 +226,18 @@ def feeding(job, neo4j_connection_object):
 
 
 def main():
-    while(True):
-        while(run_health_check(graph) == False):
-            restore_db_connection()
-        random_sleep()
-        job_found, work_node = fetch_neo4j_for_jobs(graph)
-        if job_found == False:
-            print("Info: Job not found, Give me something to do")
-            continue
-        feed_result = feeding(work_node, graph)
-        if feed_result == False:
-            print("Error: Something went wrong during feeding :(")
-            continue
-        print(f"Info: Feed Cycle Completed for: {work_node.get('name')}")
- 
+    while(run_health_check(graph) == False):
+        restore_db_connection()
+    random_sleep()
+    job_found, work_node = fetch_neo4j_for_jobs(graph)
+    if job_found == False:
+        print("Info: Job not found, Give me something to do")
+        exit(2)
+    feed_result = feeding(work_node, graph)
+    if feed_result == False:
+        print("Error: Something went wrong during feeding :(")
+        exit(1)
+    print(f"Info: Feed Cycle Completed for: {work_node.get('name')}")
 
 
 if __name__ == "__main__":

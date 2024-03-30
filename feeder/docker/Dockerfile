@@ -2,7 +2,10 @@ FROM python:3.8.15-buster
 
 # Install nslookup
 RUN DEBIAN_FRONTEND=noninteractive apt update -y
-RUN DEBIAN_FRONTEND=noninteractive apt install dnsutils -y
+RUN DEBIAN_FRONTEND=noninteractive apt install -y \
+    dnsutils \
+    python3-line-profiler \
+    bash
 
 # Add PIP Requirements file and installing them
 ADD ./feeder/docker/requirements.txt /app/requirements.txt
