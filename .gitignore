@@ -11,3 +11,4 @@ tests/
 *dev-refresh-app.sh*
 *dev_values.yaml*
 *secret*
+*app/*
