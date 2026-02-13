@@ -34,15 +34,8 @@ Recursive web crawler built in Rust. Feed it one URL and the crawler will map al
 ### Install
 
 ```bash
-git clone https://github.com/bluedotiya/web_crawler.git
-cd web_crawler
-
-helm repo add neo4j https://helm.neo4j.com/neo4j
-helm repo update
-
-cd web-crawler
-helm dependency update
-helm install web-crawler . -f values.yaml -n web-crawler --create-namespace
+helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+  --version 1.0.0 -n web-crawler --create-namespace
 ```
 
 ### Wait for readiness
