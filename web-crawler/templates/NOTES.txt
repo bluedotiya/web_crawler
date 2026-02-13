@@ -1,0 +1,92 @@
+🎉 Web Crawler has been deployed successfully!
+
+Your release is named: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+📋 Components Deployed:
+{{- if .Values.neo4j.enabled }}
+  ✅ Neo4j Database ({{ .Values.neo4j.neo4j.name }})
+{{- end }}
+{{- if .Values.feeder.enabled }}
+  ✅ Feeder Workers ({{ .Values.feeder.replicaCount }} replicas)
+{{- end }}
+{{- if .Values.manager.enabled }}
+  ✅ Manager API ({{ .Values.manager.replicaCount }} replica)
+{{- end }}
+
+🌐 Access Information:
+
+{{- if .Values.neo4j.enabled }}
+
+  Neo4j Browser:
+    URL: http://<NODE_IP>:{{ .Values.neo4j.services.neo4j.ports.http.nodePort }}
+    Username: neo4j
+    Password: {{ .Values.neo4j.neo4j.password }}
+
+  Neo4j Database:
+    Port: {{ .Values.neo4j.services.neo4j.ports.bolt.nodePort }}
+    Protocol: Bolt
+    Connection: bolt://<NODE_IP>:{{ .Values.neo4j.services.neo4j.ports.bolt.nodePort }}
+
+{{- end }}
+{{- if .Values.manager.enabled }}
+
+  Manager API:
+    URL: http://<NODE_IP>:{{ .Values.manager.service.nodePort }}
+    Endpoint: POST /
+    Example Request:
+      curl -X POST http://<NODE_IP>:{{ .Values.manager.service.nodePort }} \
+        -H 'Content-Type: application/json' \
+        -d '{"url":"https://www.example.com","depth":2}'
+
+{{- end }}
+
+📊 Check Status:
+
+  kubectl get all -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+  # Wait for Neo4j to be ready:
+  kubectl rollout status statefulset/{{ .Values.neo4j.neo4j.name }} -n {{ .Release.Namespace }}
+
+  # Check feeder pods:
+  kubectl get pods -n {{ .Release.Namespace }} -l app={{ .Values.feeder.app }}
+
+  # Check manager pod:
+  kubectl get pods -n {{ .Release.Namespace }} -l app={{ .Values.manager.app }}
+
+📝 Logs:
+
+  # Neo4j logs:
+  kubectl logs -n {{ .Release.Namespace }} {{ .Values.neo4j.neo4j.name }}-0
+
+  # Feeder logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app={{ .Values.feeder.app }} --tail=50
+
+  # Manager logs:
+  kubectl logs -n {{ .Release.Namespace }} -l app={{ .Values.manager.app }} --tail=50
+
+🔧 Management:
+
+  # Upgrade:
+  helm upgrade {{ .Release.Name }} ./web-crawler -f values.yaml
+
+  # Rollback:
+  helm rollback {{ .Release.Name }}
+
+  # Uninstall:
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+  # Status:
+  helm status {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+💡 Tips:
+
+  - Replace <NODE_IP> with your Kubernetes node's IP address
+  - To get node IP: kubectl get nodes -o wide
+  - For production, consider using Ingress instead of NodePort
+  - Configure proper StorageClass in values.yaml for persistent storage
+  - Update Neo4j password in values.yaml for production use
+
+📖 Documentation: https://github.com/bluedotiya/web_crawler
+
+Happy Crawling! 🕷️

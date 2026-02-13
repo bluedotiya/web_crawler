@@ -1,0 +1,12 @@
+dependencies:
+- name: neo4j
+  repository: https://helm.neo4j.com/neo4j
+  version: 5.26.21
+- name: feeder
+  repository: ""
+  version: 0.1.0
+- name: manager
+  repository: ""
+  version: 0.1.0
+digest: sha256:068256b1030000fe65f83064daa56fca4a7b8db6e44f7ec2c06d44cb0100b9ab
+generated: "2026-02-13T15:21:57.551273+02:00"

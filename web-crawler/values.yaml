@@ -1,0 +1,123 @@
+# Web Crawler Unified Configuration
+
+# Global settings
+global:
+  namespace: web-crawler
+
+# Neo4j configuration
+neo4j:
+  enabled: true
+  neo4j:
+    name: crawler-neo4j
+    password: "password"
+    acceptLicenseAgreement: "yes"
+    resources:
+      cpu: "0.5"
+      memory: "2Gi"
+
+  volumes:
+    data:
+      mode: dynamic
+      dynamic:
+        # Use cluster default StorageClass or specify:
+        # storageClassName: "standard"     # Minikube/GKE
+        # storageClassName: "gp3"          # AWS EBS
+        # storageClassName: "managed-premium"  # Azure
+        storageClassName: "standard"
+        requests:
+          storage: 3Gi
+
+  services:
+    neo4j:
+      enabled: true
+      type: NodePort
+      ports:
+        http:
+          enabled: true
+          nodePort: 30074
+        bolt:
+          enabled: true
+          nodePort: 30087
+
+# Feeder configuration
+feeder:
+  enabled: true
+  replicaCount: 8
+
+  image:
+    repository: ghcr.io/bluedotiya/web_crawler/feeder
+    tag: microservice
+    pullPolicy: Never
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+  livenessProbe:
+    enabled: false
+
+  readinessProbe:
+    enabled: false
+
+  env:
+    NEO4J_DNS_NAME: "crawler-neo4j.web-crawler.svc.cluster.local:7687"
+    NEO4J_USERNAME: "neo4j"
+    NEO4J_PASSWORD: "password"
+
+# Manager configuration
+manager:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: ghcr.io/bluedotiya/web_crawler/manager
+    tag: microservice
+    pullPolicy: Never
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  securityContext:
+    runAsNonRoot: false  # Flask runs on port 80
+    runAsUser: 0
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+  env:
+    NEO4J_DNS_NAME: "crawler-neo4j.web-crawler.svc.cluster.local:7687"
+    NEO4J_USERNAME: "neo4j"
+    NEO4J_PASSWORD: "password"
