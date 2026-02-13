@@ -12,9 +12,9 @@ dependencies:
     condition: neo4j.enabled
 
   - name: feeder
-    version: 0.1.0
+    version: 1.0.0
     condition: feeder.enabled
 
   - name: manager
-    version: 0.1.0
+    version: 1.0.0
     condition: manager.enabled

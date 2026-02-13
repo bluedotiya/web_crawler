@@ -12,7 +12,7 @@ CHART="$REPO_ROOT/web-crawler"
 
 FEEDER_IMAGE="ghcr.io/bluedotiya/web_crawler/feeder"
 MANAGER_IMAGE="ghcr.io/bluedotiya/web_crawler/manager"
-TAG="rust"
+TAG="latest"
 
 echo "==> Building Docker image $FEEDER_IMAGE:$TAG..."
 docker build -q -t "$FEEDER_IMAGE:$TAG" -f "$REPO_ROOT/feeder/Dockerfile" "$REPO_ROOT"
@@ -40,7 +40,7 @@ kubectl rollout status deployment/manager -n "$NAMESPACE" --timeout=120s
 echo "==> Verifying pods are running..."
 NOT_RUNNING=$(kubectl get pods -n "$NAMESPACE" \
     -l 'app.kubernetes.io/name in (feeder,manager)' \
-    --no-headers | grep -cv "Running" || true)
+    --no-headers | grep -v "Terminating" | grep -cv "Running" || true)
 
 if [ "$NOT_RUNNING" -ne 0 ]; then
     echo ""

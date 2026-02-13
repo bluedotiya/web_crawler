@@ -1,51 +1,87 @@
-name: Docker Build 
+name: Build & Publish
+
 on:
-  release:
-    types: [published]
   push:
-    branches: [ "master" ]
+    branches: ["master"]
+    tags:
+      - "feeder/v*"
+      - "manager/v*"
+      - "chart/v*"
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_PREFIX: ghcr.io/bluedotiya/web_crawler
 
 jobs:
-  build-and-push-image:
+  publish-chart:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'chart/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract chart version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/chart/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to the Container registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build Helm dependencies
+        run: helm dependency build web-crawler
+
+      - name: Package Helm chart
+        run: helm package web-crawler --version ${{ steps.version.outputs.version }}
+
+      - name: Push Helm chart to GHCR
+        run: helm push web-crawler-${{ steps.version.outputs.version }}.tgz oci://${{ env.IMAGE_PREFIX }}/charts
+
+  determine-targets:
+    if: "!(github.ref_type == 'tag' && startsWith(github.ref_name, 'chart/v'))"
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/feeder/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/feeder/v}"
+            echo 'matrix={"include":[{"service":"feeder","tag":"'"$VERSION"'"}]}' >> "$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_REF" == refs/tags/manager/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/manager/v}"
+            echo 'matrix={"include":[{"service":"manager","tag":"'"$VERSION"'"}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"include":[{"service":"feeder","tag":"latest"},{"service":"manager","tag":"latest"}]}' >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    needs: determine-targets
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - dockerfile: feeder/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/feeder
-          - dockerfile: manager/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/manager
+      matrix: ${{ fromJson(needs.determine-targets.outputs.matrix) }}
     permissions:
       contents: read
       packages: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ matrix.image }}
-
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: ${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ matrix.tag }}
