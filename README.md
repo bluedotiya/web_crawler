@@ -1,5 +1,4 @@
-[![Release & Publish](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml/badge.svg?branch=master)](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml)
-[![PR Title Check](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml/badge.svg)](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml)
+[![Release & Publish](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml/badge.svg)](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml)[![PR Title Check](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml/badge.svg)](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml)
 
 # Web Crawler
 
