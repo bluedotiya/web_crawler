@@ -4,7 +4,7 @@ replicaCount: 8
 
 image:
   repository: ghcr.io/bluedotiya/web_crawler/feeder
-  tag: rust
+  tag: latest
   pullPolicy: IfNotPresent
 
 # Resource limits and requests

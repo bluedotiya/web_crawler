@@ -46,7 +46,7 @@ feeder:
 
   image:
     repository: ghcr.io/bluedotiya/web_crawler/feeder
-    tag: rust
+    tag: latest
     pullPolicy: IfNotPresent
 
   resources:
@@ -80,7 +80,7 @@ manager:
 
   image:
     repository: ghcr.io/bluedotiya/web_crawler/manager
-    tag: rust
+    tag: latest
     pullPolicy: IfNotPresent
 
   resources:

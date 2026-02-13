@@ -4,9 +4,9 @@ dependencies:
   version: 5.26.21
 - name: feeder
   repository: ""
-  version: 0.1.0
+  version: 1.0.0
 - name: manager
   repository: ""
-  version: 0.1.0
-digest: sha256:068256b1030000fe65f83064daa56fca4a7b8db6e44f7ec2c06d44cb0100b9ab
-generated: "2026-02-13T15:21:57.551273+02:00"
+  version: 1.0.0
+digest: sha256:0e284dab6ac283841df2cc7733943b7064726fbb53109fbc16db641dd0e03dc4
+generated: "2026-02-13T19:10:50.590268+02:00"

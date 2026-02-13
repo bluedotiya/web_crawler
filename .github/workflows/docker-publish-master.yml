@@ -1,51 +1,222 @@
-name: Docker Build 
+name: Release & Publish
+
 on:
-  release:
-    types: [published]
   push:
-    branches: [ "master" ]
+    branches: ["master"]
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_PREFIX: ghcr.io/bluedotiya/web_crawler
 
 jobs:
-  build-and-push-image:
+  release:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - dockerfile: feeder/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/feeder
-          - dockerfile: manager/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/manager
     permissions:
-      contents: read
+      contents: write
       packages: write
+    outputs:
+      feeder_version: ${{ steps.feeder.outputs.version }}
+      manager_version: ${{ steps.manager.outputs.version }}
+      chart_version: ${{ steps.chart.outputs.version }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate feeder version
+        id: feeder
+        run: |
+          SERVICE="feeder"
+          PREFIX="${SERVICE}/v"
+          LAST_TAG=$(git tag -l "${PREFIX}*" --sort=-v:refname | head -1)
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Get conventional commits since last tag touching feeder/ or shared/
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- feeder/ shared/)
+          if [ -z "$COMMITS" ]; then
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Parse current version
+          CURRENT="${LAST_TAG#$PREFIX}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          # Determine bump from conventional commits
+          if echo "$COMMITS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          echo "version=${MAJOR}.${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate manager version
+        id: manager
+        run: |
+          SERVICE="manager"
+          PREFIX="${SERVICE}/v"
+          LAST_TAG=$(git tag -l "${PREFIX}*" --sort=-v:refname | head -1)
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- manager/ shared/)
+          if [ -z "$COMMITS" ]; then
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CURRENT="${LAST_TAG#$PREFIX}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if echo "$COMMITS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          echo "version=${MAJOR}.${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate chart version
+        id: chart
+        run: |
+          PREFIX="chart/v"
+          LAST_TAG=$(git tag -l "${PREFIX}*" --sort=-v:refname | head -1)
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- web-crawler/)
+          if [ -z "$COMMITS" ]; then
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CURRENT="${LAST_TAG#$PREFIX}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if echo "$COMMITS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          echo "version=${MAJOR}.${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Create git tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "${{ steps.feeder.outputs.version }}" ]; then
+            git tag "feeder/v${{ steps.feeder.outputs.version }}"
+            echo "Tagged feeder/v${{ steps.feeder.outputs.version }}"
+          fi
+
+          if [ -n "${{ steps.manager.outputs.version }}" ]; then
+            git tag "manager/v${{ steps.manager.outputs.version }}"
+            echo "Tagged manager/v${{ steps.manager.outputs.version }}"
+          fi
+
+          if [ -n "${{ steps.chart.outputs.version }}" ]; then
+            git tag "chart/v${{ steps.chart.outputs.version }}"
+            echo "Tagged chart/v${{ steps.chart.outputs.version }}"
+          fi
+
+          git push --tags
+
+  build-feeder:
+    needs: release
+    if: needs.release.outputs.feeder_version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-        with:
-          images: ${{ matrix.image }}
-
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: feeder/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/feeder:${{ needs.release.outputs.feeder_version }}
+            ${{ env.IMAGE_PREFIX }}/feeder:latest
+
+  build-manager:
+    needs: release
+    if: needs.release.outputs.manager_version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: manager/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/manager:${{ needs.release.outputs.manager_version }}
+            ${{ env.IMAGE_PREFIX }}/manager:latest
+
+  publish-chart:
+    needs: release
+    if: needs.release.outputs.chart_version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build Helm dependencies
+        run: helm dependency build web-crawler
+
+      - name: Package Helm chart
+        run: helm package web-crawler --version ${{ needs.release.outputs.chart_version }}
+
+      - name: Push Helm chart to GHCR
+        run: helm push web-crawler-${{ needs.release.outputs.chart_version }}.tgz oci://${{ env.IMAGE_PREFIX }}/charts
