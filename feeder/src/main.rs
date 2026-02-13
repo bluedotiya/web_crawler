@@ -1,3 +1,4 @@
+// Feeder — Rust web crawler worker
 mod config;
 mod crawler;
 mod dns;
