@@ -1,18 +1,27 @@
-FROM python:3.11-slim-bookworm
+# Stage 1: Build
+FROM rust:1.83-bookworm AS builder
 
-# Install nslookup
-RUN DEBIAN_FRONTEND=noninteractive apt update -y
-RUN DEBIAN_FRONTEND=noninteractive apt install dnsutils -y
+WORKDIR /app
 
-# Add PIP Requirements file and installing them
-ADD requirements.txt /app/requirements.txt
-RUN pip3 install -r /app/requirements.txt
+# Copy entire workspace
+COPY Cargo.toml Cargo.lock ./
+COPY shared/ shared/
+COPY feeder/ feeder/
+COPY manager/ manager/
 
-# Set FLASK application path
-ENV FLASK_APP=/app/manager.py
+RUN cargo build --release --package manager
 
-# Add python application files
-ADD manager.py /app/manager.py
-ADD manager_test.py /app/manager_test.py
+# Stage 2: Runtime
+FROM debian:bookworm-slim
 
-ENTRYPOINT ["/usr/local/bin/flask", "run", "--host=0.0.0.0", "--port=80"]
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user matching Helm securityContext (uid 1000)
+RUN useradd -r -u 1000 -m manager
+USER manager
+
+COPY --from=builder /app/target/release/manager /usr/local/bin/manager
+
+ENTRYPOINT ["/usr/local/bin/manager"]

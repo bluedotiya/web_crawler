@@ -3,9 +3,9 @@ use std::collections::HashSet;
 use neo4rs::{query, Graph};
 
 use crate::config::Config;
-use crate::crawler::{self, PageData};
-use crate::dns;
-use crate::url_normalize;
+use shared::crawler::{self, PageData};
+use shared::dns;
+use shared::url_normalize;
 
 /// Represents a URL job fetched from Neo4j.
 pub struct UrlJob {
@@ -144,6 +144,7 @@ async fn filter_new_urls(
 }
 
 /// Creates child URL nodes and Lead relationships in a single transaction.
+/// Uses MERGE to prevent duplicates when concurrent jobs discover the same URLs.
 async fn batch_create_children(
     graph: &Graph,
     parent: &UrlJob,
@@ -155,11 +156,11 @@ async fn batch_create_children(
         txn.run(
             query(
                 "MATCH (p:URL {name: $pname, http_type: $phttp, current_depth: $pdepth}) \
-                 CREATE (p)-[:Lead]->(c:URL { \
-                     name: $name, ip: $ip, domain: $domain, http_type: $http_type, \
-                     job_status: 'PENDING', requested_depth: $req_depth, \
-                     current_depth: $cur_depth, request_time: $req_time \
-                 })",
+                 MERGE (c:URL {name: $name, http_type: $http_type}) \
+                 ON CREATE SET c.ip = $ip, c.domain = $domain, \
+                     c.job_status = 'PENDING', c.requested_depth = $req_depth, \
+                     c.current_depth = $cur_depth, c.request_time = $req_time \
+                 MERGE (p)-[:Lead]->(c)",
             )
             .param("pname", parent.name.as_str())
             .param("phttp", parent.http_type.as_str())
@@ -177,6 +178,15 @@ async fn batch_create_children(
 
     txn.commit().await?;
     Ok(())
+}
+
+/// Best-effort attempt to mark a job as FAILED in Neo4j.
+/// Used when feeding() returns an unrecoverable error so the job
+/// doesn't stay stuck in IN-PROGRESS forever.
+pub async fn mark_failed(graph: &Graph, job: &UrlJob) {
+    if let Err(e) = update_job_status(graph, job, "FAILED", job.attempts).await {
+        tracing::error!("Failed to mark job {} as FAILED: {}", job.name, e);
+    }
 }
 
 /// Main processing pipeline for a single job.

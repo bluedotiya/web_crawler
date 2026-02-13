@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum FeederError {
+pub enum CrawlerError {
     #[error("Neo4j connection failed: {0}")]
     Neo4jConnection(#[from] neo4rs::Error),
 

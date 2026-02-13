@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
 static URL_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"https?://[\w\-.]+").unwrap());
+    LazyLock::new(|| Regex::new(r"https?://[\w\-.]+(?::\d+)?").unwrap());
 
 pub struct PageData {
     pub html: String,
@@ -12,10 +12,10 @@ pub struct PageData {
 }
 
 /// Fetches a URL and returns its HTML content and elapsed time.
-/// Returns None on any failure (matching Python's ('', '') return).
+/// Returns None on any failure.
 pub async fn get_page_data(client: &Client, url: &str) -> Option<PageData> {
     let start = Instant::now();
-    let response = client.get(url).send().await.ok()?;
+    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
     let html = response.text().await.ok()?;
     Some(PageData {
         html,
@@ -23,8 +23,8 @@ pub async fn get_page_data(client: &Client, url: &str) -> Option<PageData> {
     })
 }
 
-/// Extracts URLs from HTML content using the same regex as the Python feeder.
-/// Pattern: `https?://[\w\-.]+` — captures protocol + domain only (no paths).
+/// Extracts URLs from HTML content.
+/// Pattern: `https?://[\w\-.]+(?::\d+)?` — captures protocol + domain + optional port.
 pub fn extract_urls(html: &str) -> Vec<String> {
     URL_REGEX
         .find_iter(html)
@@ -47,7 +47,6 @@ mod tests {
     fn test_extract_urls_strips_paths() {
         let html = "Visit https://example.com/path/to/page for more";
         let urls = extract_urls(html);
-        // Regex only captures domain, /path/to/page has '/' which isn't in [\w\-.]
         assert_eq!(urls, vec!["https://example.com"]);
     }
 
@@ -73,6 +72,16 @@ mod tests {
         assert_eq!(
             urls,
             vec!["https://my-site.co.uk", "http://sub.example-domain.com"]
+        );
+    }
+
+    #[test]
+    fn test_extract_urls_with_ports() {
+        let html = "Visit https://example.com:8080/path and http://localhost:3000 for more";
+        let urls = extract_urls(html);
+        assert_eq!(
+            urls,
+            vec!["https://example.com:8080", "http://localhost:3000"]
         );
     }
 }

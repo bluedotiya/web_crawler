@@ -2,10 +2,14 @@
 FROM rust:1.83-bookworm AS builder
 
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
-COPY src/ src/
 
-RUN cargo build --release
+# Copy entire workspace
+COPY Cargo.toml Cargo.lock ./
+COPY shared/ shared/
+COPY feeder/ feeder/
+COPY manager/ manager/
+
+RUN cargo build --release --package feeder
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim

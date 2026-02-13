@@ -12,3 +12,4 @@ tests/
 *dev_values.yaml*
 *secret*
 *target*
+*.tgz

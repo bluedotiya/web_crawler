@@ -1,19 +1,24 @@
 /// Normalizes a URL by uppercasing, removing protocol and www prefix.
 ///
-/// Returns (normalized_name, protocol) matching the Python feeder behavior.
+/// Returns (normalized_name, protocol).
 ///
 /// # Examples
 /// - `"https://www.Google.com"` -> `("GOOGLE.COM", "HTTPS://")`
 /// - `"http://example.org"` -> `("EXAMPLE.ORG", "HTTP://")`
 pub fn normalize_url(url: &str) -> (String, String) {
     let upper = url.to_uppercase();
-    if upper.contains("HTTPS://") {
-        let name = upper.replace("HTTPS://", "").replace("WWW.", "");
-        (name, "HTTPS://".to_string())
+    let (stripped, proto) = if let Some(rest) = upper.strip_prefix("HTTPS://") {
+        (rest, "HTTPS://")
+    } else if let Some(rest) = upper.strip_prefix("HTTP://") {
+        (rest, "HTTP://")
     } else {
-        let name = upper.replace("HTTP://", "").replace("WWW.", "");
-        (name, "HTTP://".to_string())
-    }
+        (upper.as_str(), "HTTP://")
+    };
+    let name = stripped
+        .strip_prefix("WWW.")
+        .unwrap_or(stripped)
+        .to_string();
+    (name, proto.to_string())
 }
 
 #[cfg(test)]
@@ -53,5 +58,12 @@ mod tests {
         let (name, proto) = normalize_url("http://www.example.com");
         assert_eq!(name, "EXAMPLE.COM");
         assert_eq!(proto, "HTTP://");
+    }
+
+    #[test]
+    fn test_normalize_preserves_www_in_subdomain() {
+        let (name, proto) = normalize_url("https://subdomain.www.example.com");
+        assert_eq!(name, "SUBDOMAIN.WWW.EXAMPLE.COM");
+        assert_eq!(proto, "HTTPS://");
     }
 }

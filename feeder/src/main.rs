@@ -1,11 +1,5 @@
-// Feeder — Rust web crawler worker
 mod config;
-mod crawler;
-mod dns;
-mod error;
 mod job;
-mod neo4j_client;
-mod url_normalize;
 
 use std::time::Duration;
 
@@ -14,6 +8,7 @@ use rand::Rng;
 use tracing_subscriber::EnvFilter;
 
 use config::Config;
+use shared::neo4j_client;
 
 async fn random_sleep(config: &Config) {
     let secs =
@@ -36,7 +31,9 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env();
 
     // Create shared resources
-    let mut graph = neo4j_client::connect(&config).await?;
+    let mut graph =
+        neo4j_client::connect(&config.neo4j_uri, &config.neo4j_username, &config.neo4j_password)
+            .await?;
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(config.http_timeout_secs))
@@ -50,7 +47,13 @@ async fn main() -> anyhow::Result<()> {
     loop {
         // Health check loop with reconnection (Bug #1 fixed)
         while !neo4j_client::health_check(&graph).await {
-            if let Some(new_graph) = neo4j_client::restore_connection(&config).await {
+            if let Some(new_graph) = neo4j_client::restore_connection(
+                &config.neo4j_uri,
+                &config.neo4j_username,
+                &config.neo4j_password,
+            )
+            .await
+            {
                 graph = new_graph;
             } else {
                 random_sleep(&config).await;
@@ -82,6 +85,7 @@ async fn main() -> anyhow::Result<()> {
             }
             Err(e) => {
                 tracing::error!("Feed error: {}", e);
+                job::mark_failed(&graph, &url_job).await;
             }
         }
     }

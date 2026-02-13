@@ -1,7 +1,7 @@
 use hickory_resolver::TokioResolver;
 use std::net::IpAddr;
 
-use crate::error::FeederError;
+use crate::error::CrawlerError;
 
 pub struct NetworkStats {
     pub domain: String,
@@ -10,16 +10,13 @@ pub struct NetworkStats {
 
 /// Resolves a normalized URL (already uppercased, no protocol) to domain and IPv4 address.
 ///
-/// Matches the Python feeder's iterative domain shortening logic:
-/// For "A.B.C.COM", tries "C.COM", then "B.C.COM", then "A.B.C.COM", etc.
-/// up to max_depth iterations.
-///
-/// Bug #2 fix: returns proper Result::Err instead of undefined variable.
+/// Iterative domain shortening: for "A.B.C.COM", tries "C.COM", then "B.C.COM",
+/// then "A.B.C.COM", up to max_depth iterations.
 pub async fn get_network_stats(
     resolver: &TokioResolver,
     normalized_url: &str,
     max_depth: usize,
-) -> Result<NetworkStats, FeederError> {
+) -> Result<NetworkStats, CrawlerError> {
     let parts: Vec<&str> = normalized_url.split('.').collect();
 
     for suffix_len in 2..=max_depth.min(parts.len()) {
@@ -44,7 +41,7 @@ pub async fn get_network_stats(
         }
     }
 
-    Err(FeederError::DnsResolution {
+    Err(CrawlerError::DnsResolution {
         domain: normalized_url.to_string(),
         attempts: max_depth as u32,
     })
@@ -52,6 +49,8 @@ pub async fn get_network_stats(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     /// Builds candidate domains from a normalized URL by progressively including
     /// more subdomains from right to left, starting with the TLD+1.
     ///
@@ -65,7 +64,6 @@ mod tests {
             })
             .collect()
     }
-    use super::*;
 
     #[test]
     fn test_candidates_simple_domain() {

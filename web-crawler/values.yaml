@@ -80,7 +80,7 @@ manager:
 
   image:
     repository: ghcr.io/bluedotiya/web_crawler/manager
-    tag: microservice
+    tag: rust
     pullPolicy: IfNotPresent
 
   resources:
@@ -92,13 +92,13 @@ manager:
       cpu: "500m"
 
   securityContext:
-    runAsNonRoot: false  # Flask runs on port 80
-    runAsUser: 0
+    runAsNonRoot: true
+    runAsUser: 1000
 
   service:
     type: NodePort
     port: 80
-    targetPort: 80
+    targetPort: 8080
     nodePort: 30080
 
   livenessProbe:

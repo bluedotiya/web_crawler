@@ -1,10 +1,8 @@
 use neo4rs::{query, Graph};
 
-use crate::config::Config;
-
-/// Creates a new Neo4j connection using the provided config.
-pub async fn connect(config: &Config) -> Result<Graph, neo4rs::Error> {
-    Graph::new(&config.neo4j_uri, &config.neo4j_username, &config.neo4j_password).await
+/// Creates a new Neo4j connection.
+pub async fn connect(uri: &str, username: &str, password: &str) -> Result<Graph, neo4rs::Error> {
+    Graph::new(uri, username, password).await
 }
 
 /// Tests Neo4j connectivity with a simple query.
@@ -19,8 +17,8 @@ pub async fn health_check(graph: &Graph) -> bool {
 }
 
 /// Attempts to restore the database connection.
-pub async fn restore_connection(config: &Config) -> Option<Graph> {
-    match connect(config).await {
+pub async fn restore_connection(uri: &str, username: &str, password: &str) -> Option<Graph> {
+    match connect(uri, username, password).await {
         Ok(graph) => {
             if health_check(&graph).await {
                 tracing::info!("Database connection restored");

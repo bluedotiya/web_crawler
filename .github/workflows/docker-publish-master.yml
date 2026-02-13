@@ -18,7 +18,7 @@ jobs:
         include:
           - dockerfile: feeder/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/feeder
-          - dockerfile: manager/docker/Dockerfile
+          - dockerfile: manager/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/manager
     permissions:
       contents: read
