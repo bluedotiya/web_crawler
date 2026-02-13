@@ -2,6 +2,7 @@
 name = "shared"
 version = "1.0.0"
 edition = "2021"
+description = "Shared library for web-crawler services"
 
 [dependencies]
 reqwest = { workspace = true }
