@@ -1,6 +1,6 @@
 apiVersion: v2
 name: web-crawler
-description: Distributed web crawler with Neo4j backend
+description: Distributed web crawler with Neo4j graph database
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
