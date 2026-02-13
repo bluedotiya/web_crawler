@@ -16,8 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: legacy_crawler/Dockerfile
-            image: ghcr.io/bluedotiya/web_crawler/legacy_crawler
           - dockerfile: feeder/docker/Dockerfile
             image: ghcr.io/bluedotiya/web_crawler/feeder
           - dockerfile: manager/docker/Dockerfile
