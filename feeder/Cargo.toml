@@ -1,0 +1,16 @@
+[package]
+name = "feeder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared = { path = "../shared" }
+tokio = { workspace = true }
+neo4rs = { workspace = true }
+reqwest = { workspace = true }
+hickory-resolver = { workspace = true }
+rand = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenvy = { workspace = true }

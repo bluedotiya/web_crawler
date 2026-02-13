@@ -4,7 +4,7 @@ replicaCount: 8
 
 image:
   repository: ghcr.io/bluedotiya/web_crawler/feeder
-  tag: microservice
+  tag: rust
   pullPolicy: IfNotPresent
 
 # Resource limits and requests
@@ -37,7 +37,7 @@ readinessProbe:
 
 # Environment variables (will be overridden by parent values)
 env:
-  NEO4J_DNS_NAME: "crawler-neo4j.web-crawler.svc.cluster.local:7687"
+  NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
   NEO4J_USERNAME: "neo4j"
   NEO4J_PASSWORD: "password"
 

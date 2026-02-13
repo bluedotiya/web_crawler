@@ -46,6 +46,8 @@ spec:
               value: {{ .Values.env.NEO4J_USERNAME | quote }}
             - name: NEO4J_PASSWORD
               value: {{ .Values.env.NEO4J_PASSWORD | quote }}
+            - name: SERVER_PORT
+              value: {{ .Values.service.targetPort | quote }}
           {{- end }}
           ports:
             - name: http

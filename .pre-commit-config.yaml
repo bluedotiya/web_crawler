@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/AndrejOrsula/pre-commit-cargo
+    rev: 0.5.0
+    hooks:
+      - id: cargo-check
+        args: ["--workspace"]
+      - id: cargo-clippy
+        args: ["--workspace", "--", "-D", "warnings"]
+      - id: cargo-test
+        args: ["--workspace"]
+
+  - repo: local
+    hooks:
+      - id: integration-test
+        name: integration test (build + deploy + verify)
+        entry: ./dev.sh
+        language: script
+        files: ^(shared|feeder|manager)/
+        pass_filenames: false

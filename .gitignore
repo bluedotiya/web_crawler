@@ -11,3 +11,5 @@ tests/
 *dev-refresh-app.sh*
 *dev_values.yaml*
 *secret*
+*target*
+*.tgz
