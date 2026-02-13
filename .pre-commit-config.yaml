@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/AndrejOrsula/pre-commit-cargo
+    rev: 0.5.0
+    hooks:
+      - id: cargo-check
+        args: ["--manifest-path=feeder/Cargo.toml"]
+      - id: cargo-clippy
+        args: ["--manifest-path=feeder/Cargo.toml", "--", "-D", "warnings"]
+      - id: cargo-test
+        args: ["--manifest-path=feeder/Cargo.toml"]
+
+  - repo: local
+    hooks:
+      - id: integration-test
+        name: integration test (build + deploy + verify)
+        entry: ./dev.sh
+        language: script
+        files: ^feeder/
+        pass_filenames: false
