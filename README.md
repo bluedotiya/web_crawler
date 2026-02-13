@@ -91,19 +91,39 @@ Configured via `.pre-commit-config.yaml`:
 
 ## CI/CD & Versioning
 
-### Automatic semantic versioning
+### Release process
 
 Every merge to `master` automatically:
-1. Calculates the next version for each service based on conventional commits
+1. Calculates the next version for each service based on conventional commits since the last git tag
 2. Creates git tags (`feeder/v1.2.0`, `manager/v1.1.0`, `chart/v1.0.3`)
 3. Builds and pushes Docker images to GHCR with both semver and `latest` tags
-4. Packages and publishes the Helm chart to GHCR OCI registry
+4. Packages and publishes the Helm chart as an OCI artifact to GHCR
 
 Services are versioned independently — only services with relevant file changes get a new release. Changes to `shared/` trigger releases for both `feeder` and `manager`.
 
+```
+  merge to master
+       │
+       ▼
+  ┌─────────────────────────┐
+  │ Calculate versions       │  Compares conventional commits since last tag
+  │ per service (feeder,     │  for each path: feeder/, manager/, shared/,
+  │ manager, chart)          │  web-crawler/
+  └─────────────────────────┘
+       │
+       ▼
+  ┌─────────────────────────┐
+  │ Create git tags          │  feeder/v1.2.0, manager/v1.1.0, chart/v1.0.3
+  └─────────────────────────┘
+       │
+       ├──► Build & push Docker images (semver + latest)
+       │
+       └──► Package & push Helm chart (OCI artifact)
+```
+
 ### Conventional commits
 
-PR titles **must** follow [conventional commit](https://www.conventionalcommits.org/) format (enforced by CI):
+PR titles **must** follow [conventional commit](https://www.conventionalcommits.org/) format (enforced by CI). Since PRs are squash-merged, the PR title becomes the commit message on `master` and drives the version bump.
 
 | Prefix | Version bump | Example |
 |--------|-------------|---------|
@@ -121,21 +141,36 @@ ghcr.io/bluedotiya/web_crawler/manager:latest
 ghcr.io/bluedotiya/web_crawler/manager:1.0.0
 ```
 
-### Helm chart
+### Helm chart (OCI)
+
+The Helm chart is published as an OCI artifact to GHCR. No `helm repo add` is needed — OCI references work directly.
 
 ```bash
 # Install from GHCR OCI registry
-helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler --version 1.0.0
+helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+  --version 1.0.1 -n web-crawler --create-namespace
+
+# Pull chart locally
+helm pull oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler --version 1.0.1
+
+# Inspect chart metadata
+helm show all oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler --version 1.0.1
 ```
 
 ## Configuration
 
-Customize via `web-crawler/values.yaml` or `--set` flags:
+Customize via `--set` flags or a values override file:
 
 ```bash
-helm install web-crawler ./web-crawler -n web-crawler --create-namespace \
+# From OCI registry with overrides
+helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+  --version 1.0.1 -n web-crawler --create-namespace \
   --set feeder.replicaCount=16 \
   --set neo4j.neo4j.password=SecurePassword123
+
+# From local source
+helm install web-crawler ./web-crawler -n web-crawler --create-namespace \
+  -f my-values.yaml
 ```
 
 ## Visualization
