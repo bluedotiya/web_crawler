@@ -2,7 +2,7 @@ name: Release & Publish
 
 on:
   push:
-    branches: ["master", "feature/fix-ci-pipeline"]  # TODO: remove feature branch after testing
+    branches: ["master"]
 
 env:
   REGISTRY: ghcr.io
