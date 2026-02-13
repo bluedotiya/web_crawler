@@ -28,12 +28,15 @@ struct ChildNode {
     request_time: String,
 }
 
-/// Fetches a single PENDING URL job from Neo4j.
+/// Atomically fetches and claims a single PENDING URL job from Neo4j.
+/// Sets status to IN-PROGRESS in the same query to prevent race conditions
+/// when multiple feeder pods run concurrently.
 pub async fn fetch_job(graph: &Graph) -> Result<Option<UrlJob>, anyhow::Error> {
     let mut result = graph
         .execute(query(
             "MATCH (n:URL) \
              WHERE n.current_depth <> n.requested_depth AND n.job_status = 'PENDING' \
+             SET n.job_status = 'IN-PROGRESS' \
              RETURN n LIMIT 1",
         ))
         .await?;
@@ -110,24 +113,34 @@ async fn validate_job(
     }
 }
 
-/// Returns a HashSet of "HTTP_TYPE+NAME" strings for all nodes in the DB.
-/// Optimization: only fetches name and http_type, not entire node objects.
-async fn get_existing_urls(graph: &Graph) -> Result<HashSet<String>, anyhow::Error> {
+/// Filters a list of candidate URLs against the database, returning only those
+/// that don't already exist. Pushes the check into Cypher instead of loading
+/// the entire graph into memory.
+async fn filter_new_urls(
+    graph: &Graph,
+    candidates: &HashSet<String>,
+) -> Result<HashSet<String>, anyhow::Error> {
+    let candidate_list: Vec<&str> = candidates.iter().map(|s| s.as_str()).collect();
     let mut result = graph
-        .execute(query(
-            "MATCH (n) \
-             WHERE n.name IS NOT NULL AND n.http_type IS NOT NULL \
-             RETURN n.name AS name, n.http_type AS http_type",
-        ))
+        .execute(
+            query(
+                "UNWIND $urls AS url \
+                 OPTIONAL MATCH (n:URL) \
+                 WHERE (n.http_type + n.name) = url \
+                 WITH url, n \
+                 WHERE n IS NULL \
+                 RETURN url",
+            )
+            .param("urls", candidate_list),
+        )
         .await?;
 
-    let mut set = HashSet::new();
+    let mut new_urls = HashSet::new();
     while let Some(row) = result.next().await? {
-        let name: String = row.get("name")?;
-        let http_type: String = row.get("http_type")?;
-        set.insert(format!("{}{}", http_type, name));
+        let url: String = row.get("url")?;
+        new_urls.insert(url);
     }
-    Ok(set)
+    Ok(new_urls)
 }
 
 /// Creates child URL nodes and Lead relationships in a single transaction.
@@ -176,22 +189,18 @@ pub async fn feeding(
     config: &Config,
     job: &mut UrlJob,
 ) -> Result<bool, anyhow::Error> {
-    // Step 1: Validate (fetch HTML)
+    // Step 1: Validate (fetch HTML) — job is already IN-PROGRESS from fetch_job()
     let page_data = match validate_job(graph, client, config, job).await? {
         Some(pd) => pd,
         None => return Ok(false),
     };
 
-    // Step 2: Mark IN-PROGRESS
-    update_job_status(graph, job, "IN-PROGRESS", job.attempts).await?;
-
-    // Step 3: Extract URLs from HTML
+    // Step 2: Extract URLs from HTML
     let extracted_urls = crawler::extract_urls(&page_data.html);
 
-    // Step 4: Deduplicate against existing DB nodes
-    let existing = get_existing_urls(graph).await?;
+    // Step 3: Deduplicate against existing DB nodes (server-side)
     let upper_urls: HashSet<String> = extracted_urls.iter().map(|u| u.to_uppercase()).collect();
-    let new_urls: Vec<&String> = upper_urls.iter().filter(|u| !existing.contains(*u)).collect();
+    let new_urls = filter_new_urls(graph, &upper_urls).await?;
 
     if new_urls.is_empty() {
         tracing::warn!("No new URLs found in: {}", job.name);
@@ -199,7 +208,7 @@ pub async fn feeding(
         return Ok(true);
     }
 
-    // Step 5: Normalize, DNS resolve, build child list
+    // Step 4: Normalize, DNS resolve, build child list
     let normalized: HashSet<(String, String)> = new_urls
         .iter()
         .map(|u| url_normalize::normalize_url(u))
