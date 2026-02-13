@@ -5,12 +5,12 @@ import requests
 import re
 import py2neo
 import subprocess
+import os
 
-# Global DNS Record
-# Should be 'neo4j.default.svc.cluster.local:7687'
-NEO4J_DNS_NAME = "neo4j.default.svc.cluster.local:7687"
-NEO4J_USERNAME = "neo4j"
-NEO4J_PASSWORD = "password"
+# Global DNS Record - read from environment variables
+NEO4J_DNS_NAME = os.environ.get("NEO4J_DNS_NAME", "neo4j.default.svc.cluster.local:7687")
+NEO4J_USERNAME = os.environ.get("NEO4J_USERNAME", "neo4j")
+NEO4J_PASSWORD = os.environ.get("NEO4J_PASSWORD", "password")
 
 # Global Neo4j connection obj
 graph = py2neo.Graph(f"bolt://{NEO4J_DNS_NAME}", auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
