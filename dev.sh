@@ -10,8 +10,8 @@ NAMESPACE="web-crawler"
 RELEASE="web-crawler"
 CHART="$REPO_ROOT/web-crawler"
 
-FEEDER_IMAGE="ghcr.io/bluedotiya/web_crawler/feeder"
-MANAGER_IMAGE="ghcr.io/bluedotiya/web_crawler/manager"
+FEEDER_IMAGE="ghcr.io/bluedotiya/web-crawler/feeder"
+MANAGER_IMAGE="ghcr.io/bluedotiya/web-crawler/manager"
 TAG="latest"
 
 echo "==> Building Docker image $FEEDER_IMAGE:$TAG..."

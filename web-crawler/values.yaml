@@ -45,7 +45,7 @@ feeder:
   replicaCount: 8
 
   image:
-    repository: ghcr.io/bluedotiya/web_crawler/feeder
+    repository: ghcr.io/bluedotiya/web-crawler/feeder
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -79,7 +79,7 @@ manager:
   replicaCount: 1
 
   image:
-    repository: ghcr.io/bluedotiya/web_crawler/manager
+    repository: ghcr.io/bluedotiya/web-crawler/manager
     tag: latest
     pullPolicy: IfNotPresent
 

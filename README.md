@@ -1,4 +1,4 @@
-[![Release & Publish](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml/badge.svg)](https://github.com/bluedotiya/web_crawler/actions/workflows/docker-publish-master.yml)[![PR Title Check](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml/badge.svg)](https://github.com/bluedotiya/web_crawler/actions/workflows/pr-title.yml)
+[![Release & Publish](https://github.com/bluedotiya/web-crawler/actions/workflows/docker-publish-master.yml/badge.svg)](https://github.com/bluedotiya/web-crawler/actions/workflows/docker-publish-master.yml)[![PR Title Check](https://github.com/bluedotiya/web-crawler/actions/workflows/pr-title.yml/badge.svg)](https://github.com/bluedotiya/web-crawler/actions/workflows/pr-title.yml)
 
 # Web Crawler
 
@@ -33,7 +33,7 @@ Recursive web crawler built in Rust. Feed it one URL and the crawler will map al
 ### Install
 
 ```bash
-helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler \
   --version 1.0.0 -n web-crawler --create-namespace
 ```
 
@@ -127,10 +127,10 @@ PR titles **must** follow [conventional commit](https://www.conventionalcommits.
 ### Docker images
 
 ```
-ghcr.io/bluedotiya/web_crawler/feeder:latest
-ghcr.io/bluedotiya/web_crawler/feeder:1.0.0
-ghcr.io/bluedotiya/web_crawler/manager:latest
-ghcr.io/bluedotiya/web_crawler/manager:1.0.0
+ghcr.io/bluedotiya/web-crawler/feeder:latest
+ghcr.io/bluedotiya/web-crawler/feeder:1.0.0
+ghcr.io/bluedotiya/web-crawler/manager:latest
+ghcr.io/bluedotiya/web-crawler/manager:1.0.0
 ```
 
 ### Helm chart (OCI)
@@ -139,14 +139,14 @@ The Helm chart is published as an OCI artifact to GHCR. No `helm repo add` is ne
 
 ```bash
 # Install from GHCR OCI registry
-helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler \
   --version 1.0.1 -n web-crawler --create-namespace
 
 # Pull chart locally
-helm pull oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler --version 1.0.1
+helm pull oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler --version 1.0.1
 
 # Inspect chart metadata
-helm show all oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler --version 1.0.1
+helm show all oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler --version 1.0.1
 ```
 
 ## Configuration
@@ -155,7 +155,7 @@ Customize via `--set` flags or a values override file:
 
 ```bash
 # From OCI registry with overrides
-helm install web-crawler oci://ghcr.io/bluedotiya/web_crawler/charts/web-crawler \
+helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler \
   --version 1.0.1 -n web-crawler --create-namespace \
   --set feeder.replicaCount=16 \
   --set neo4j.neo4j.password=SecurePassword123
