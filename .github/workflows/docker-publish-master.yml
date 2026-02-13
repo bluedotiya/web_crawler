@@ -2,7 +2,7 @@ name: Release & Publish
 
 on:
   push:
-    branches: ["master"]
+    branches: ["master", "feature/fix-ci-pipeline"]  # TODO: remove feature branch after testing
 
 env:
   REGISTRY: ghcr.io
@@ -211,6 +211,9 @@ jobs:
 
       - name: Log in to the Container registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Add Helm repositories
+        run: helm repo add neo4j https://helm.neo4j.com/neo4j
 
       - name: Build Helm dependencies
         run: helm dependency build web-crawler
