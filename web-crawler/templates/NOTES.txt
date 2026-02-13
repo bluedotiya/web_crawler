@@ -87,6 +87,6 @@ Namespace: {{ .Release.Namespace }}
   - Configure proper StorageClass in values.yaml for persistent storage
   - Update Neo4j password in values.yaml for production use
 
-📖 Documentation: https://github.com/bluedotiya/web_crawler
+📖 Documentation: https://github.com/bluedotiya/web-crawler
 
 Happy Crawling! 🕷️
