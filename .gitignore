@@ -12,4 +12,3 @@ tests/
 *dev_values.yaml*
 *secret*
 *target*
-Cargo.lock

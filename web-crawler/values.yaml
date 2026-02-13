@@ -46,8 +46,8 @@ feeder:
 
   image:
     repository: ghcr.io/bluedotiya/web_crawler/feeder
-    tag: microservice
-    pullPolicy: Never
+    tag: rust
+    pullPolicy: IfNotPresent
 
   resources:
     requests:
@@ -69,7 +69,7 @@ feeder:
     enabled: false
 
   env:
-    NEO4J_DNS_NAME: "crawler-neo4j.web-crawler.svc.cluster.local:7687"
+    NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
     NEO4J_USERNAME: "neo4j"
     NEO4J_PASSWORD: "password"
 
@@ -81,7 +81,7 @@ manager:
   image:
     repository: ghcr.io/bluedotiya/web_crawler/manager
     tag: microservice
-    pullPolicy: Never
+    pullPolicy: IfNotPresent
 
   resources:
     requests:
@@ -102,22 +102,12 @@ manager:
     nodePort: 30080
 
   livenessProbe:
-    enabled: true
-    httpGet:
-      path: /
-      port: 80
-    initialDelaySeconds: 30
-    periodSeconds: 10
+    enabled: false
 
   readinessProbe:
-    enabled: true
-    httpGet:
-      path: /
-      port: 80
-    initialDelaySeconds: 10
-    periodSeconds: 5
+    enabled: false
 
   env:
-    NEO4J_DNS_NAME: "crawler-neo4j.web-crawler.svc.cluster.local:7687"
+    NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
     NEO4J_USERNAME: "neo4j"
     NEO4J_PASSWORD: "password"
