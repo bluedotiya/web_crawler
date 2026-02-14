@@ -14,7 +14,6 @@ use axum::{
 use tower_http::{
     compression::CompressionLayer,
     cors::{Any, CorsLayer},
-    services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
 use tracing_subscriber::EnvFilter;
@@ -81,19 +80,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/crawls/{id}/stats", get(routes::status::get_crawl_stats))
         .route("/crawls/{id}/ws", get(routes::ws::crawl_ws));
 
-    // Static file serving with SPA fallback
-    let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "/app/static".to_string());
-    let spa_fallback = ServeDir::new(&static_dir)
-        .not_found_service(ServeFile::new(format!("{}/index.html", static_dir)));
-
     let app = Router::new()
         // Health endpoints
         .route("/health", get(routes::health::health))
         .route("/ready", get(routes::health::ready))
         // API v1
         .nest("/api/v1", api_v1)
-        // Static files (SPA fallback) — lowest priority
-        .fallback_service(spa_fallback)
         .layer(CompressionLayer::new())
         .layer(cors)
         .layer(TraceLayer::new_for_http())

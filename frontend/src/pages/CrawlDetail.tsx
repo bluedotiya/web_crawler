@@ -39,7 +39,7 @@ export default function CrawlDetail() {
     queryKey: ["crawl-graph", id],
     queryFn: () => getCrawlGraph(id!),
     enabled: !!id && activeTab === "graph",
-    refetchInterval: 15000,
+    refetchInterval: crawl?.status === "running" ? 15000 : false,
   });
 
   // WebSocket for live updates
@@ -278,7 +278,7 @@ export default function CrawlDetail() {
               Graph Visualization
               {graphData && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
-                  {graphData.nodes.length} nodes, {graphData.edges.length} edges
+                  {graphData.nodes.length + 1} nodes, {graphData.edges.length} edges
                 </span>
               )}
             </CardTitle>

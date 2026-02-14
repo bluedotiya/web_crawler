@@ -140,15 +140,16 @@ pub async fn list_crawls(
          WITH r, count(u) AS total, \
            sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
            sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
-           sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress \
-         WITH r, total, completed, \
+           sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
+           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
+         WITH r, total, completed, failed, \
            CASE WHEN pending = 0 AND in_progress = 0 THEN 'completed' ELSE 'running' END AS status \
          WHERE status = $status \
-         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, status: status}) AS items \
+         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, status: status}) AS items \
          UNWIND items[$offset..($offset + $limit)] AS item \
          RETURN item.r.crawl_id AS crawl_id, item.r.name AS root_url, \
            item.r.http_type AS http_type, item.r.requested_depth AS depth, \
-           item.total AS total, item.completed AS completed, item.status AS status, \
+           item.total AS total, item.completed AS completed, item.failed AS failed, item.status AS status, \
            total_count"
     } else {
         "MATCH (r:ROOT) \
@@ -156,14 +157,15 @@ pub async fn list_crawls(
          WITH r, count(u) AS total, \
            sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
            sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
-           sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress \
-         WITH r, total, completed, \
+           sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
+           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
+         WITH r, total, completed, failed, \
            CASE WHEN pending = 0 AND in_progress = 0 THEN 'completed' ELSE 'running' END AS status \
-         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, status: status}) AS items \
+         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, status: status}) AS items \
          UNWIND items[$offset..($offset + $limit)] AS item \
          RETURN item.r.crawl_id AS crawl_id, item.r.name AS root_url, \
            item.r.http_type AS http_type, item.r.requested_depth AS depth, \
-           item.total AS total, item.completed AS completed, item.status AS status, \
+           item.total AS total, item.completed AS completed, item.failed AS failed, item.status AS status, \
            total_count"
     };
 
@@ -191,6 +193,7 @@ pub async fn list_crawls(
             status: row.get("status")?,
             total: row.get("total")?,
             completed: row.get("completed")?,
+            failed: row.get("failed")?,
         });
     }
 

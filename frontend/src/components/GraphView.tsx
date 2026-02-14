@@ -49,6 +49,15 @@ export function GraphView({ data }: GraphViewProps) {
     return { nodes, links };
   }, [data]);
 
+  const activeStatuses = useMemo(() => {
+    const statuses = new Set<string>();
+    data.nodes.forEach((n) => {
+      if (n.node_type === "ROOT") statuses.add("root");
+      else if (n.status) statuses.add(n.status);
+    });
+    return Object.entries(STATUS_COLORS).filter(([s]) => statuses.has(s));
+  }, [data]);
+
   const handleEngineStop = useCallback(() => {
     if (fgRef.current) {
       fgRef.current.zoomToFit(400);
@@ -98,7 +107,7 @@ export function GraphView({ data }: GraphViewProps) {
         height={600}
       />
       <div className="absolute bottom-4 left-4 flex gap-3 bg-gray-800/80 rounded-lg p-2">
-        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+        {activeStatuses.map(([status, color]) => (
           <div key={status} className="flex items-center gap-1">
             <span
               className="w-3 h-3 rounded-full"

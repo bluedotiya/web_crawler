@@ -42,6 +42,7 @@ jobs:
     outputs:
       feeder_version: ${{ steps.feeder.outputs.version }}
       manager_version: ${{ steps.manager.outputs.version }}
+      frontend_version: ${{ steps.frontend.outputs.version }}
       chart_version: ${{ steps.chart.outputs.version }}
 
     steps:
@@ -96,8 +97,38 @@ jobs:
             exit 0
           fi
 
-          # Include frontend/ changes in manager version calculation
-          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- manager/ shared/ frontend/)
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- manager/ shared/)
+          if [ -z "$COMMITS" ]; then
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CURRENT="${LAST_TAG#$PREFIX}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          if echo "$COMMITS" | grep -qE '^[a-z]+(\(.+\))?!:'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$COMMITS" | grep -qE '^feat(\(.+\))?:'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          echo "version=${MAJOR}.${MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate frontend version
+        id: frontend
+        run: |
+          SERVICE="frontend"
+          PREFIX="${SERVICE}/v"
+          LAST_TAG=$(git tag -l "${PREFIX}*" --sort=-v:refname | head -1)
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- frontend/)
           if [ -z "$COMMITS" ]; then
             echo "version=" >> "$GITHUB_OUTPUT"
             exit 0
@@ -161,6 +192,11 @@ jobs:
             echo "Tagged manager/v${{ steps.manager.outputs.version }}"
           fi
 
+          if [ -n "${{ steps.frontend.outputs.version }}" ]; then
+            git tag "frontend/v${{ steps.frontend.outputs.version }}"
+            echo "Tagged frontend/v${{ steps.frontend.outputs.version }}"
+          fi
+
           if [ -n "${{ steps.chart.outputs.version }}" ]; then
             git tag "chart/v${{ steps.chart.outputs.version }}"
             echo "Tagged chart/v${{ steps.chart.outputs.version }}"
@@ -197,7 +233,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/feeder:latest
 
   build-manager:
-    needs: [release, frontend-ci]
+    needs: release
     if: needs.release.outputs.manager_version != ''
     runs-on: ubuntu-latest
     permissions:
@@ -223,6 +259,34 @@ jobs:
           tags: |
             ${{ env.IMAGE_PREFIX }}/manager:${{ needs.release.outputs.manager_version }}
             ${{ env.IMAGE_PREFIX }}/manager:latest
+
+  build-frontend:
+    needs: [release, frontend-ci]
+    if: needs.release.outputs.frontend_version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/frontend:${{ needs.release.outputs.frontend_version }}
+            ${{ env.IMAGE_PREFIX }}/frontend:latest
 
   publish-chart:
     needs: release

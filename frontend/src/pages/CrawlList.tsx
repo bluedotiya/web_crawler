@@ -103,6 +103,7 @@ export default function CrawlList() {
                   <ProgressBar
                     completed={crawl.completed}
                     total={crawl.total}
+                    failed={crawl.failed}
                   />
                 </Link>
               ))}

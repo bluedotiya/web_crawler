@@ -119,7 +119,6 @@ async fn main() -> anyhow::Result<()> {
         current_job = Some(job::UrlJob {
             name: url_job.name.clone(),
             http_type: url_job.http_type.clone(),
-            job_status: url_job.job_status.clone(),
             requested_depth: url_job.requested_depth,
             current_depth: url_job.current_depth,
             attempts: url_job.attempts,

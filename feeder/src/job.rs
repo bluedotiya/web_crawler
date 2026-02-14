@@ -12,8 +12,6 @@ use shared::url_normalize;
 pub struct UrlJob {
     pub name: String,
     pub http_type: String,
-    #[allow(dead_code)]
-    pub job_status: String,
     pub requested_depth: i64,
     pub current_depth: i64,
     pub attempts: Option<i64>,
@@ -62,7 +60,6 @@ pub async fn fetch_job(graph: &Graph, stale_timeout: i64) -> Result<Option<UrlJo
             Ok(Some(UrlJob {
                 name: node.get("name")?,
                 http_type: node.get("http_type")?,
-                job_status: node.get("job_status")?,
                 requested_depth: node.get("requested_depth")?,
                 current_depth: node.get("current_depth")?,
                 attempts: node.get::<i64>("attempts").ok(),

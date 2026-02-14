@@ -166,6 +166,7 @@ export default function Dashboard() {
                   <ProgressBar
                     completed={crawl.completed}
                     total={crawl.total}
+                    failed={crawl.failed}
                   />
                 </Link>
               ))}

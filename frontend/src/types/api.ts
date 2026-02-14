@@ -22,6 +22,7 @@ export interface CrawlListItem {
   status: string;
   total: number;
   completed: number;
+  failed: number;
 }
 
 export interface CrawlListResponse {

@@ -33,6 +33,7 @@ pub struct CrawlListItem {
     pub status: String,
     pub total: i64,
     pub completed: i64,
+    pub failed: i64,
 }
 
 #[derive(Serialize)]
