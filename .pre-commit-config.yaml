@@ -17,3 +17,10 @@ repos:
         language: script
         files: ^(shared|feeder|manager)/
         pass_filenames: false
+
+      - id: frontend-lint
+        name: frontend lint & type-check
+        entry: bash -c 'cd frontend && npm run lint && npm run type-check'
+        language: system
+        files: ^frontend/
+        pass_filenames: false

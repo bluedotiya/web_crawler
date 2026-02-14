@@ -37,16 +37,29 @@ service:
 
 # Health checks
 livenessProbe:
-  enabled: false
+  enabled: true
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
 
 readinessProbe:
-  enabled: false
+  enabled: true
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
 
-# Environment variables (will be overridden by parent values)
+# Environment variables
 env:
   NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
-  NEO4J_USERNAME: "neo4j"
-  NEO4J_PASSWORD: "password"
+
+# Secret reference name for Neo4j credentials
+secretName: neo4j-credentials
 
 # Pod annotations
 podAnnotations: {}

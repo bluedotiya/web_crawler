@@ -63,15 +63,21 @@ feeder:
     fsGroup: 1000
 
   livenessProbe:
-    enabled: false
+    enabled: true
+    httpGet:
+      path: /health
+      port: 8081
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 5
 
   readinessProbe:
     enabled: false
 
   env:
     NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
-    NEO4J_USERNAME: "neo4j"
-    NEO4J_PASSWORD: "password"
+
+  secretName: neo4j-credentials
 
 # Manager configuration
 manager:
@@ -102,12 +108,24 @@ manager:
     nodePort: 30080
 
   livenessProbe:
-    enabled: false
+    enabled: true
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 15
+    timeoutSeconds: 5
 
   readinessProbe:
-    enabled: false
+    enabled: true
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
 
   env:
     NEO4J_DNS_NAME: "crawler-neo4j-lb-neo4j.web-crawler.svc.cluster.local:7687"
-    NEO4J_USERNAME: "neo4j"
-    NEO4J_PASSWORD: "password"
+
+  secretName: neo4j-credentials

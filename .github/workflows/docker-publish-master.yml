@@ -9,6 +9,31 @@ env:
   IMAGE_PREFIX: ghcr.io/bluedotiya/web-crawler
 
 jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: cd frontend && npm ci
+
+      - name: Lint
+        run: cd frontend && npm run lint
+
+      - name: Type check
+        run: cd frontend && npm run type-check
+
+      - name: Build
+        run: cd frontend && npm run build
+
   release:
     runs-on: ubuntu-latest
     permissions:
@@ -71,7 +96,8 @@ jobs:
             exit 0
           fi
 
-          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- manager/ shared/)
+          # Include frontend/ changes in manager version calculation
+          COMMITS=$(git log "$LAST_TAG"..HEAD --format="%s" -- manager/ shared/ frontend/)
           if [ -z "$COMMITS" ]; then
             echo "version=" >> "$GITHUB_OUTPUT"
             exit 0
@@ -171,7 +197,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}/feeder:latest
 
   build-manager:
-    needs: release
+    needs: [release, frontend-ci]
     if: needs.release.outputs.manager_version != ''
     runs-on: ubuntu-latest
     permissions:

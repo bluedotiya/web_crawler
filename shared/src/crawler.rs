@@ -3,6 +3,8 @@ use reqwest::Client;
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
+use crate::error::CrawlerError;
+
 static URL_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"https?://[\w\-.]+(?::\d+)?").unwrap());
 
@@ -12,12 +14,37 @@ pub struct PageData {
 }
 
 /// Fetches a URL and returns its HTML content and elapsed time.
-/// Returns None on any failure.
-pub async fn get_page_data(client: &Client, url: &str) -> Option<PageData> {
+/// Returns typed errors for timeout, HTTP status, request failure, and body read failure.
+pub async fn get_page_data(client: &Client, url: &str) -> Result<PageData, CrawlerError> {
     let start = Instant::now();
-    let response = client.get(url).send().await.ok()?.error_for_status().ok()?;
-    let html = response.text().await.ok()?;
-    Some(PageData {
+
+    let response = client.get(url).send().await.map_err(|e| {
+        if e.is_timeout() {
+            CrawlerError::HttpTimeout {
+                url: url.to_string(),
+            }
+        } else {
+            CrawlerError::HttpRequest {
+                url: url.to_string(),
+                source: e,
+            }
+        }
+    })?;
+
+    let status = response.status();
+    if !status.is_success() {
+        return Err(CrawlerError::HttpStatus {
+            url: url.to_string(),
+            status: status.as_u16(),
+        });
+    }
+
+    let html = response.text().await.map_err(|e| CrawlerError::HttpBodyRead {
+        url: url.to_string(),
+        source: e,
+    })?;
+
+    Ok(PageData {
         html,
         elapsed: start.elapsed(),
     })

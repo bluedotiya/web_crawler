@@ -38,17 +38,21 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           {{- end }}
-          {{- if .Values.env }}
           env:
             - name: NEO4J_DNS_NAME
               value: {{ .Values.env.NEO4J_DNS_NAME | quote }}
             - name: NEO4J_USERNAME
-              value: {{ .Values.env.NEO4J_USERNAME | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName | default "neo4j-credentials" }}
+                  key: NEO4J_USERNAME
             - name: NEO4J_PASSWORD
-              value: {{ .Values.env.NEO4J_PASSWORD | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName | default "neo4j-credentials" }}
+                  key: NEO4J_PASSWORD
             - name: SERVER_PORT
               value: {{ .Values.service.targetPort | quote }}
-          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.targetPort }}

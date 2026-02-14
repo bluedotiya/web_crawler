@@ -10,9 +10,13 @@ tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 neo4rs = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, default-features = false }
 hickory-resolver = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
+futures = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tower-http = { workspace = true }
