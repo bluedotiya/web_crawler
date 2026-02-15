@@ -18,3 +18,7 @@ dependencies:
   - name: manager
     version: 1.0.0
     condition: manager.enabled
+
+  - name: frontend
+    version: 1.0.0
+    condition: frontend.enabled

@@ -7,8 +7,9 @@ pub struct Config {
     pub http_timeout_secs: u64,
     pub max_attempts: i64,
     pub max_dns_depth: usize,
-    pub sleep_min_secs: u64,
-    pub sleep_max_secs: u64,
+    pub poll_min_ms: u64,
+    pub poll_max_ms: u64,
+    pub stale_timeout_minutes: i64,
 }
 
 fn required_env(key: &str) -> String {
@@ -31,8 +32,9 @@ impl Config {
             http_timeout_secs: env_or("HTTP_TIMEOUT_SECS", 10),
             max_attempts: env_or("MAX_ATTEMPTS", 3),
             max_dns_depth: env_or("MAX_DNS_DEPTH", 5),
-            sleep_min_secs: env_or("SLEEP_MIN_SECS", 1),
-            sleep_max_secs: env_or("SLEEP_MAX_SECS", 4),
+            poll_min_ms: env_or("POLL_MIN_MS", 100),
+            poll_max_ms: env_or("POLL_MAX_MS", 30_000),
+            stale_timeout_minutes: env_or("STALE_TIMEOUT_MINUTES", 1),
         }
     }
 }

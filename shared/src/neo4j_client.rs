@@ -6,8 +6,9 @@ pub async fn connect(uri: &str, username: &str, password: &str) -> Result<Graph,
 }
 
 /// Tests Neo4j connectivity with a simple query.
+/// Uses `RETURN 1` instead of `MATCH () RETURN 1 LIMIT 1` to work on empty databases.
 pub async fn health_check(graph: &Graph) -> bool {
-    match graph.run(query("MATCH () RETURN 1 LIMIT 1")).await {
+    match graph.run(query("RETURN 1")).await {
         Ok(_) => true,
         Err(e) => {
             tracing::warn!("Database connection degraded: {}", e);

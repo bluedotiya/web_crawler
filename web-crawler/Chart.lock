@@ -8,5 +8,8 @@ dependencies:
 - name: manager
   repository: ""
   version: 1.0.0
-digest: sha256:0e284dab6ac283841df2cc7733943b7064726fbb53109fbc16db641dd0e03dc4
-generated: "2026-02-13T19:10:50.590268+02:00"
+- name: frontend
+  repository: ""
+  version: 1.0.0
+digest: sha256:96621a0fc561d71c30432345cd4caa96f1ba0a74adcb5e93f327c37ec1f4270e
+generated: "2026-02-14T20:10:12.304813+02:00"

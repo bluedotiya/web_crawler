@@ -7,10 +7,14 @@ edition = "2021"
 shared = { path = "../shared" }
 tokio = { workspace = true }
 neo4rs = { workspace = true }
-reqwest = { workspace = true }
+# default-features = false must be set per-crate; Cargo ignores it in [workspace.dependencies]
+reqwest = { workspace = true, default-features = false }
 hickory-resolver = { workspace = true }
 rand = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 dotenvy = { workspace = true }
+futures = { workspace = true }
+axum = { workspace = true }
+serde_json = { workspace = true }

@@ -2,33 +2,47 @@
 
 # Web Crawler
 
-Recursive web crawler built in Rust. Feed it one URL and the crawler will map all related websites at a chosen depth, storing the graph in Neo4j.
+A distributed, recursive web crawler built in Rust. Feed it a URL and it maps all linked websites at a chosen depth, storing the graph in Neo4j and visualizing it in a React frontend.
+
+![Dashboard](docs/images/dashboard.png)
+
+## Features
+
+- **Recursive crawling** — follow links up to a configurable depth
+- **Distributed workers** — 8 feeder replicas process URLs in parallel
+- **Graph storage** — Neo4j stores URL nodes and link relationships
+- **Real-time progress** — WebSocket updates stream crawl status live
+- **Interactive graph visualization** — force-directed graph with color-coded node status
+- **Crawl management** — create, monitor, cancel, and review crawl statistics
+- **Kubernetes-native** — Helm chart deploys all services with a single command
 
 ## Architecture
 
-```
-                    ┌──────────┐
-  POST /  ────────► │ Manager  │ ──── Creates ROOT + child URL nodes
-                    └──────────┘
-                         │
-                      Neo4j DB
-                         │
-                    ┌──────────┐
-                    │ Feeder   │ ──── Picks up PENDING URLs, crawls, creates children
-                    │ (x8)     │
-                    └──────────┘
+```mermaid
+graph TD
+    User([User]) -->|Port 30080| Frontend
+    Frontend["Frontend<br/>(nginx + React SPA)"]
+    Frontend -->|"/api/*" reverse proxy| Manager
+    Manager["Manager<br/>(Axum REST API)"]
+    Manager -->|Reads / Writes| Neo4j
+    Neo4j[("Neo4j<br/>Graph Database")]
+    Feeder["Feeder (x8)<br/>(Background Workers)"]
+    Feeder -->|Claims / Updates| Neo4j
 ```
 
-**Rust workspace** with three crates:
-- `shared/` — common library (crawler, DNS, Neo4j client, URL normalization)
-- `manager/` — HTTP API (Axum) that accepts crawl requests
-- `feeder/` — worker loop that processes pending URLs
+| Service | Tech | Role |
+|---------|------|------|
+| **Frontend** | nginx + React/Vite/TypeScript | SPA UI, API reverse proxy |
+| **Manager** | Rust + Axum | REST API, crawl initiation, WebSocket |
+| **Feeder** | Rust | Background URL processing workers |
+| **Neo4j** | Neo4j 5.x | Graph database for crawl data |
 
 ## Quick Start
 
 ### Prerequisites
-- kubectl, Helm 3.x
-- Kubernetes cluster (minikube, EKS, GKE, etc.)
+
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) + [Helm 3.x](https://helm.sh/docs/intro/install/)
+- A Kubernetes cluster (minikube, EKS, GKE, etc.)
 
 ### Install
 
@@ -37,136 +51,87 @@ helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler
   --version 1.0.0 -n web-crawler --create-namespace
 ```
 
-### Wait for readiness
+### Verify
 
 ```bash
 kubectl rollout status statefulset/crawler-neo4j -n web-crawler
-kubectl get pods -n web-crawler -l app.kubernetes.io/instance=web-crawler
+kubectl get pods -n web-crawler
 ```
 
-### Access services
+### Access the UI
 
-```
-Neo4j Browser:  http://<NODE_IP>:30074
-Neo4j Bolt:     bolt://<NODE_IP>:30087
-Manager API:    http://<NODE_IP>:30080
+```bash
+# Get your node IP
+minikube ip   # or use your cluster's external IP
+
+# Open the frontend
+open http://<NODE_IP>:30080
 ```
 
 ### Start a crawl
 
+Use the web UI at `/new`, or via the API:
+
 ```bash
-curl -X POST http://<NODE_IP>:30080 \
+curl -X POST http://<NODE_IP>:30080/api/v1/crawls \
   -H 'Content-Type: application/json' \
-  -d '{"url":"https://www.example.com","depth":2}'
+  -d '{"url": "https://example.com", "depth": 2}'
 ```
 
-## Development
+## Screenshots
 
-### Local dev loop
+<table>
+  <tr>
+    <td><strong>Dashboard</strong><br/><img src="docs/images/dashboard.png" width="400"/></td>
+    <td><strong>Crawl List</strong><br/><img src="docs/images/crawl-list.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td><strong>New Crawl</strong><br/><img src="docs/images/new-crawl.png" width="400"/></td>
+    <td><strong>Crawl Progress</strong><br/><img src="docs/images/crawl-detail-progress.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td><strong>Graph Visualization</strong><br/><img src="docs/images/graph-visualization.png" width="400"/></td>
+    <td><strong>Statistics</strong><br/><img src="docs/images/crawl-stats.png" width="400"/></td>
+  </tr>
+</table>
 
-```bash
-# Run unit tests and clippy
-cargo test --workspace
-cargo clippy --workspace -- -D warnings
+## Documentation
 
-# Full integration test (builds Docker images, deploys to minikube, verifies pods)
-./dev.sh
-```
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | System design, data flow, concurrency model, WebSocket protocol |
+| [Neo4j Graph Model](docs/neo4j-graph-model.md) | Node labels, properties, relationships, indexes, example queries |
+| [API Reference](docs/api-reference.md) | REST endpoints, request/response schemas, WebSocket protocol |
+| [Deployment Guide](docs/deployment.md) | Helm install, configuration reference, scaling, monitoring |
+| [Development Guide](docs/development.md) | Local setup, testing, CI/CD pipeline, conventional commits |
 
-### Pre-commit hooks
+## Tech Stack
 
-Configured via `.pre-commit-config.yaml`:
-- `cargo check --workspace`
-- `cargo clippy --workspace -- -D warnings`
-- `cargo test --workspace`
-- Integration test (`dev.sh`) — runs on changes to `shared/`, `feeder/`, or `manager/`
+| Layer | Technology |
+|-------|-----------|
+| Backend | Rust, Axum, Tokio, neo4rs, hickory-resolver |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Database | Neo4j 5.x |
+| Infra | Docker, Kubernetes, Helm, GitHub Actions |
+| Registry | GitHub Container Registry (GHCR) |
 
-## CI/CD & Versioning
+## Contributing
 
-### Release process
+1. Fork the repository
+2. Create a feature branch from `master`
+3. Follow [conventional commit](https://www.conventionalcommits.org/) format for PR titles
+4. Ensure all checks pass: `cargo test --workspace && cargo clippy --workspace -- -D warnings`
+5. For frontend changes: `cd frontend && npm run lint && npm run type-check`
+6. Open a pull request — PRs are squash-merged, and the title drives the version bump
 
-Every merge to `master` automatically:
-1. Calculates the next version for each service based on conventional commits since the last git tag
-2. Creates git tags (`feeder/v1.2.0`, `manager/v1.1.0`, `chart/v1.0.3`)
-3. Builds and pushes Docker images to GHCR with both semver and `latest` tags
-4. Packages and publishes the Helm chart as an OCI artifact to GHCR
+See the [Development Guide](docs/development.md) for detailed setup instructions.
 
-Services are versioned independently — only services with relevant file changes get a new release. Changes to `shared/` trigger releases for both `feeder` and `manager`.
+## Security
 
-```
-  merge to master
-       │
-       ▼
-  ┌─────────────────────────┐
-  │ Calculate versions       │  Compares conventional commits since last tag
-  │ per service (feeder,     │  for each path: feeder/, manager/, shared/,
-  │ manager, chart)          │  web-crawler/
-  └─────────────────────────┘
-       │
-       ▼
-  ┌─────────────────────────┐
-  │ Create git tags          │  feeder/v1.2.0, manager/v1.1.0, chart/v1.0.3
-  └─────────────────────────┘
-       │
-       ├──► Build & push Docker images (semver + latest)
-       │
-       └──► Package & push Helm chart (OCI artifact)
-```
+- Report security vulnerabilities via [GitHub Security Advisories](https://github.com/bluedotiya/web-crawler/security/advisories)
+- All services run as non-root users in containers
+- Neo4j credentials are stored in Kubernetes secrets
 
-### Conventional commits
+## License
 
-PR titles **must** follow [conventional commit](https://www.conventionalcommits.org/) format (enforced by CI). Since PRs are squash-merged, the PR title becomes the commit message on `master` and drives the version bump.
-
-| Prefix | Version bump | Example |
-|--------|-------------|---------|
-| `feat:` | Minor (1.0.0 → 1.1.0) | `feat: add health endpoint` |
-| `fix:` | Patch (1.0.0 → 1.0.1) | `fix: handle DNS timeout` |
-| `feat!:` | Major (1.0.0 → 2.0.0) | `feat!: redesign API` |
-| `chore:`, `docs:`, `refactor:`, etc. | Patch | `chore: update dependencies` |
-
-### Docker images
-
-```
-ghcr.io/bluedotiya/web-crawler/feeder:latest
-ghcr.io/bluedotiya/web-crawler/feeder:1.0.0
-ghcr.io/bluedotiya/web-crawler/manager:latest
-ghcr.io/bluedotiya/web-crawler/manager:1.0.0
-```
-
-### Helm chart (OCI)
-
-The Helm chart is published as an OCI artifact to GHCR. No `helm repo add` is needed — OCI references work directly.
-
-```bash
-# Install from GHCR OCI registry
-helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler \
-  --version 1.0.1 -n web-crawler --create-namespace
-
-# Pull chart locally
-helm pull oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler --version 1.0.1
-
-# Inspect chart metadata
-helm show all oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler --version 1.0.1
-```
-
-## Configuration
-
-Customize via `--set` flags or a values override file:
-
-```bash
-# From OCI registry with overrides
-helm install web-crawler oci://ghcr.io/bluedotiya/web-crawler/charts/web-crawler \
-  --version 1.0.1 -n web-crawler --create-namespace \
-  --set feeder.replicaCount=16 \
-  --set neo4j.neo4j.password=SecurePassword123
-
-# From local source
-helm install web-crawler ./web-crawler -n web-crawler --create-namespace \
-  -f my-values.yaml
-```
-
-## Visualization
-
-Use Neo4j Desktop with GraphXR for the best graph viewing experience:
-
-![GraphXR Visualization](https://user-images.githubusercontent.com/75704012/214429032-f19d2bb0-e09b-470e-94b2-faa925c3be59.png)
+This project is licensed under the [GPL-3.0 License](LICENSE).
