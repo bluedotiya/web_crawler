@@ -61,7 +61,7 @@ List all crawls with optional filtering and pagination.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `status` | string | — | Filter by status: `"running"` or `"completed"` |
+| `status` | string | — | Filter by status: `"running"`, `"completed"`, or `"cancelled"` |
 | `limit` | integer | 20 | Max results per page (capped at 100) |
 | `offset` | integer | 0 | Number of results to skip |
 
