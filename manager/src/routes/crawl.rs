@@ -25,11 +25,22 @@ fn crawler_error_to_status(err: &CrawlerError) -> StatusCode {
     }
 }
 
+const MAX_CRAWL_DEPTH: i64 = 5;
+
 /// POST /api/v1/crawls — Submit a new crawl.
 pub async fn create_crawl(
     State(state): State<Arc<AppState>>,
     Json(req): Json<CrawlRequest>,
 ) -> impl IntoResponse {
+    // 0. Validate depth
+    if req.depth < 1 || req.depth > MAX_CRAWL_DEPTH {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error": format!("depth must be between 1 and {}", MAX_CRAWL_DEPTH)})),
+        )
+            .into_response();
+    }
+
     // 1. Normalize root URL
     let (root_name, http_type) = url_normalize::normalize_url(&req.url);
 

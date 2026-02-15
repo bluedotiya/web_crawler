@@ -133,24 +133,26 @@ async fn validate_job(
 }
 
 /// Filters a list of candidate URLs against the database, returning only those
-/// that don't already exist. Pushes the check into Cypher instead of loading
-/// the entire graph into memory.
+/// that don't already exist within this crawl. Scoped by crawl_id so
+/// independent crawls don't interfere with each other.
 async fn filter_new_urls(
     graph: &Graph,
     candidates: &HashSet<String>,
+    crawl_id: &str,
 ) -> Result<HashSet<String>, anyhow::Error> {
     let candidate_list: Vec<&str> = candidates.iter().map(|s| s.as_str()).collect();
     let mut result = graph
         .execute(
             query(
                 "UNWIND $urls AS url \
-                 OPTIONAL MATCH (n:URL) \
+                 OPTIONAL MATCH (n:URL {crawl_id: $crawl_id}) \
                  WHERE (n.http_type + n.name) = url \
                  WITH url, n \
                  WHERE n IS NULL \
                  RETURN url",
             )
-            .param("urls", candidate_list),
+            .param("urls", candidate_list)
+            .param("crawl_id", crawl_id),
         )
         .await?;
 
@@ -282,7 +284,7 @@ pub async fn feeding(
 
     // Step 3: Deduplicate against existing DB nodes (server-side)
     let upper_urls: HashSet<String> = extracted_urls.iter().map(|u| u.to_uppercase()).collect();
-    let new_urls = filter_new_urls(graph, &upper_urls).await?;
+    let new_urls = filter_new_urls(graph, &upper_urls, &job.crawl_id).await?;
 
     if new_urls.is_empty() {
         tracing::warn!("No new URLs found in: {}", job.name);

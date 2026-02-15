@@ -19,7 +19,7 @@ Start a new crawl from a given URL.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `url` | string | Yes | The URL to crawl (must be http or https) |
-| `depth` | integer | Yes | Maximum link depth to follow (1 = root only) |
+| `depth` | integer | Yes | Maximum link depth to follow (1–5, where 1 = root only) |
 
 **Example:**
 
