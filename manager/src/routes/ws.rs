@@ -39,7 +39,7 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>, crawl_id: St
             }
         };
 
-        let is_complete = progress.status == "completed";
+        let is_complete = progress.status == "completed" || progress.status == "cancelled";
         let msg = serde_json::to_string(&progress).unwrap_or_default();
 
         if socket.send(Message::Text(msg.into())).await.is_err() {

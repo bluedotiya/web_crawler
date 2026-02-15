@@ -9,7 +9,7 @@ async fn health() -> impl IntoResponse {
 /// Runs as a background task — does not block.
 pub fn spawn_health_server() {
     tokio::spawn(async {
-        let app = Router::new().route("/health", get(health));
+        let app = Router::new().route("/livez", get(health));
 
         let listener = match tokio::net::TcpListener::bind("0.0.0.0:8081").await {
             Ok(l) => l,

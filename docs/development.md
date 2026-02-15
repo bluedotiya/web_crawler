@@ -101,8 +101,13 @@ The Vite dev server proxies `/api/*` requests to the manager at `http://localhos
 ### Full Integration Test
 
 ```bash
-# Builds Docker images, deploys to minikube, verifies pods are running
-./dev.sh
+# Build images in minikube's Docker daemon, deploy with Helm, verify pods
+eval $(minikube docker-env)
+docker build -t ghcr.io/bluedotiya/web-crawler/manager:latest -f manager/Dockerfile .
+docker build -t ghcr.io/bluedotiya/web-crawler/feeder:latest -f feeder/Dockerfile .
+docker build -t ghcr.io/bluedotiya/web-crawler/frontend:latest -f frontend/Dockerfile .
+helm upgrade --install web-crawler ./web-crawler -n web-crawler --create-namespace
+kubectl rollout status deployment manager feeder frontend -n web-crawler
 ```
 
 ## Pre-commit Hooks

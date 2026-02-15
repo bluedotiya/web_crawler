@@ -80,9 +80,10 @@ pub async fn get_crawl_progress(
                    sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
                    sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
                    sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
-                   sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
+                   sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed, \
+                   sum(CASE WHEN u.job_status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled \
                  RETURN r.name AS root_url, r.requested_depth AS depth, r.http_type AS http_type, \
-                   total, completed, pending, in_progress, failed",
+                   total, completed, pending, in_progress, failed, cancelled",
             )
             .param("crawl_id", crawl_id),
         )
@@ -99,10 +100,15 @@ pub async fn get_crawl_progress(
                     let pending: i64 = row.get("pending")?;
                     let in_progress: i64 = row.get("in_progress")?;
                     let failed: i64 = row.get("failed")?;
+                    let cancelled: i64 = row.get("cancelled")?;
                     let depth: i64 = row.get("depth")?;
 
                     let status = if pending == 0 && in_progress == 0 {
-                        "completed".to_string()
+                        if cancelled > 0 && completed == 0 {
+                            "cancelled".to_string()
+                        } else {
+                            "completed".to_string()
+                        }
                     } else {
                         "running".to_string()
                     };
@@ -115,6 +121,7 @@ pub async fn get_crawl_progress(
                         pending,
                         in_progress,
                         failed,
+                        cancelled,
                         root_url: format!("{}{}", http_type, url),
                         requested_depth: depth,
                     }))
@@ -141,15 +148,18 @@ pub async fn list_crawls(
            sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
            sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
            sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
-           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
-         WITH r, total, completed, failed, \
-           CASE WHEN pending = 0 AND in_progress = 0 THEN 'completed' ELSE 'running' END AS status \
+           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed, \
+           sum(CASE WHEN u.job_status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled \
+         WITH r, total, completed, failed, cancelled, \
+           CASE WHEN pending = 0 AND in_progress = 0 THEN \
+             CASE WHEN cancelled > 0 AND completed = 0 THEN 'cancelled' ELSE 'completed' END \
+           ELSE 'running' END AS status \
          WHERE status = $status \
-         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, status: status}) AS items \
+         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, cancelled: cancelled, status: status}) AS items \
          UNWIND items[$offset..($offset + $limit)] AS item \
          RETURN item.r.crawl_id AS crawl_id, item.r.name AS root_url, \
            item.r.http_type AS http_type, item.r.requested_depth AS depth, \
-           item.total AS total, item.completed AS completed, item.failed AS failed, item.status AS status, \
+           item.total AS total, item.completed AS completed, item.failed AS failed, item.cancelled AS cancelled, item.status AS status, \
            total_count"
     } else {
         "MATCH (r:ROOT) \
@@ -158,14 +168,17 @@ pub async fn list_crawls(
            sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
            sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
            sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
-           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
-         WITH r, total, completed, failed, \
-           CASE WHEN pending = 0 AND in_progress = 0 THEN 'completed' ELSE 'running' END AS status \
-         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, status: status}) AS items \
+           sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed, \
+           sum(CASE WHEN u.job_status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled \
+         WITH r, total, completed, failed, cancelled, \
+           CASE WHEN pending = 0 AND in_progress = 0 THEN \
+             CASE WHEN cancelled > 0 AND completed = 0 THEN 'cancelled' ELSE 'completed' END \
+           ELSE 'running' END AS status \
+         WITH count(*) AS total_count, collect({r: r, total: total, completed: completed, failed: failed, cancelled: cancelled, status: status}) AS items \
          UNWIND items[$offset..($offset + $limit)] AS item \
          RETURN item.r.crawl_id AS crawl_id, item.r.name AS root_url, \
            item.r.http_type AS http_type, item.r.requested_depth AS depth, \
-           item.total AS total, item.completed AS completed, item.failed AS failed, item.status AS status, \
+           item.total AS total, item.completed AS completed, item.failed AS failed, item.cancelled AS cancelled, item.status AS status, \
            total_count"
     };
 
@@ -194,6 +207,7 @@ pub async fn list_crawls(
             total: row.get("total")?,
             completed: row.get("completed")?,
             failed: row.get("failed")?,
+            cancelled: row.get("cancelled")?,
         });
     }
 
@@ -201,31 +215,23 @@ pub async fn list_crawls(
 }
 
 /// Cancel a crawl by marking all its PENDING/IN-PROGRESS URLs as CANCELLED.
+/// Uses a single atomic query to avoid race conditions with feeders.
 pub async fn cancel_crawl(graph: &Graph, crawl_id: &str) -> Result<bool, anyhow::Error> {
-    // Check if crawl exists
-    let mut check = graph
+    let mut result = graph
         .execute(
-            query("MATCH (r:ROOT {crawl_id: $crawl_id}) RETURN r LIMIT 1")
-                .param("crawl_id", crawl_id),
-        )
-        .await?;
-
-    if check.next().await?.is_none() {
-        return Ok(false);
-    }
-
-    graph
-        .run(
             query(
-                "MATCH (u:URL {crawl_id: $crawl_id}) \
+                "MATCH (r:ROOT {crawl_id: $crawl_id}) \
+                 WITH r \
+                 OPTIONAL MATCH (u:URL {crawl_id: $crawl_id}) \
                  WHERE u.job_status IN ['PENDING', 'IN-PROGRESS'] \
-                 SET u.job_status = 'CANCELLED'",
+                 SET u.job_status = 'CANCELLED' \
+                 RETURN r.crawl_id AS crawl_id",
             )
             .param("crawl_id", crawl_id),
         )
         .await?;
 
-    Ok(true)
+    Ok(result.next().await?.is_some())
 }
 
 /// Get aggregate statistics for a crawl.
@@ -246,9 +252,10 @@ pub async fn get_crawl_stats(
                    sum(CASE WHEN u.job_status = 'PENDING' THEN 1 ELSE 0 END) AS pending, \
                    sum(CASE WHEN u.job_status = 'IN-PROGRESS' THEN 1 ELSE 0 END) AS in_progress, \
                    sum(CASE WHEN u.job_status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed, \
-                   sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed \
+                   sum(CASE WHEN u.job_status = 'FAILED' THEN 1 ELSE 0 END) AS failed, \
+                   sum(CASE WHEN u.job_status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled \
                  RETURN r.crawl_id AS crawl_id, total_urls, unique_domains, max_depth, \
-                   pending, in_progress, completed, failed",
+                   pending, in_progress, completed, failed, cancelled",
             )
             .param("crawl_id", crawl_id),
         )
@@ -268,6 +275,7 @@ pub async fn get_crawl_stats(
                         in_progress: row.get("in_progress")?,
                         completed: row.get("completed")?,
                         failed: row.get("failed")?,
+                        cancelled: row.get("cancelled")?,
                     },
                 })),
                 None => Ok(None),

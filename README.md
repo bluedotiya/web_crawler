@@ -129,7 +129,7 @@ See the [Development Guide](docs/development.md) for detailed setup instructions
 ## Security
 
 - Report security vulnerabilities via [GitHub Security Advisories](https://github.com/bluedotiya/web-crawler/security/advisories)
-- The crawler respects `robots.txt` implicitly by only following `<a>` tags
+- The crawler does not fetch or parse `robots.txt` — it extracts URLs via regex from raw HTML
 - All services run as non-root users in containers
 - Neo4j credentials are stored in Kubernetes secrets
 

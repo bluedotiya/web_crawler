@@ -5,6 +5,7 @@ edition = "2021"
 description = "Shared library for web-crawler services"
 
 [dependencies]
+# default-features = false must be set per-crate; Cargo ignores it in [workspace.dependencies]
 reqwest = { workspace = true, default-features = false }
 hickory-resolver = { workspace = true }
 neo4rs = { workspace = true }

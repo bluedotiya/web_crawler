@@ -32,7 +32,7 @@ containerSecurityContext:
 livenessProbe:
   enabled: true
   httpGet:
-    path: /health
+    path: /livez
     port: 8081
   initialDelaySeconds: 10
   periodSeconds: 15

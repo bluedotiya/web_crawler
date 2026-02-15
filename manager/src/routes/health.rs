@@ -6,11 +6,11 @@ use serde_json::json;
 use crate::state::AppState;
 use shared::neo4j_client;
 
-pub async fn health() -> impl IntoResponse {
+pub async fn livez() -> impl IntoResponse {
     (StatusCode::OK, Json(json!({"status": "ok"})))
 }
 
-pub async fn ready(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn readyz(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if neo4j_client::health_check(&state.graph).await {
         (StatusCode::OK, Json(json!({"status": "ready"})))
     } else {

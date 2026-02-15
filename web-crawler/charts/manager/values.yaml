@@ -38,7 +38,7 @@ service:
 livenessProbe:
   enabled: true
   httpGet:
-    path: /health
+    path: /livez
     port: 8080
   initialDelaySeconds: 10
   periodSeconds: 15
@@ -47,7 +47,7 @@ livenessProbe:
 readinessProbe:
   enabled: true
   httpGet:
-    path: /ready
+    path: /readyz
     port: 8080
   initialDelaySeconds: 5
   periodSeconds: 10

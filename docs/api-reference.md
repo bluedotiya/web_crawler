@@ -83,7 +83,8 @@ curl "http://localhost:8080/api/v1/crawls?status=running&limit=10"
       "status": "completed",
       "total": 42,
       "completed": 40,
-      "failed": 2
+      "failed": 2,
+      "cancelled": 0
     }
   ],
   "total": 1,
@@ -125,6 +126,7 @@ curl http://localhost:8080/api/v1/crawls/d262a3e7-19de-437f-b0a4-cf1d689b1caf
   "pending": 200,
   "in_progress": 26,
   "failed": 60,
+  "cancelled": 0,
   "root_url": "https://example.com",
   "requested_depth": 3
 }
@@ -132,7 +134,8 @@ curl http://localhost:8080/api/v1/crawls/d262a3e7-19de-437f-b0a4-cf1d689b1caf
 
 **Status values:**
 - `"running"` — at least one URL is PENDING or IN-PROGRESS
-- `"completed"` — all URLs are COMPLETED, FAILED, or CANCELLED
+- `"completed"` — all URLs finished processing (mix of COMPLETED, FAILED, or CANCELLED)
+- `"cancelled"` — all URLs finished and none completed successfully (all CANCELLED/FAILED)
 
 **Error responses:**
 
@@ -255,7 +258,8 @@ curl http://localhost:8080/api/v1/crawls/d262a3e7-19de-437f-b0a4-cf1d689b1caf/st
     "pending": 0,
     "in_progress": 0,
     "completed": 726,
-    "failed": 60
+    "failed": 60,
+    "cancelled": 0
   }
 }
 ```
@@ -303,16 +307,16 @@ ws.onmessage = (event) => {
 
 ## Health Endpoints
 
-### Health Check
+### Liveness Check
 
 ```
-GET /health
+GET /livez
 ```
 
 Basic liveness check. Always returns 200 if the server is running.
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/livez
 ```
 
 **Response:** `200 OK`
@@ -324,13 +328,13 @@ curl http://localhost:8080/health
 ### Readiness Check
 
 ```
-GET /ready
+GET /readyz
 ```
 
 Checks that the manager can connect to Neo4j.
 
 ```bash
-curl http://localhost:8080/ready
+curl http://localhost:8080/readyz
 ```
 
 **Response:** `200 OK`

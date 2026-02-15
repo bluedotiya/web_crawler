@@ -21,6 +21,7 @@ pub struct CrawlProgress {
     pub pending: i64,
     pub in_progress: i64,
     pub failed: i64,
+    pub cancelled: i64,
     pub root_url: String,
     pub requested_depth: i64,
 }
@@ -34,6 +35,7 @@ pub struct CrawlListItem {
     pub total: i64,
     pub completed: i64,
     pub failed: i64,
+    pub cancelled: i64,
 }
 
 #[derive(Serialize)]
@@ -59,4 +61,5 @@ pub struct StatusCounts {
     pub in_progress: i64,
     pub completed: i64,
     pub failed: i64,
+    pub cancelled: i64,
 }

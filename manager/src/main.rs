@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("manager=info,tower_http=debug")),
+                .unwrap_or_else(|_| EnvFilter::new("manager=info,tower_http=info")),
         )
         .init();
 
@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         config,
     });
 
-    // CORS layer
+    // Permissive CORS — acceptable behind nginx reverse proxy
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -82,8 +82,8 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         // Health endpoints
-        .route("/health", get(routes::health::health))
-        .route("/ready", get(routes::health::ready))
+        .route("/livez", get(routes::health::livez))
+        .route("/readyz", get(routes::health::readyz))
         // API v1
         .nest("/api/v1", api_v1)
         .layer(CompressionLayer::new())

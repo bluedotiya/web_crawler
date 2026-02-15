@@ -16,11 +16,11 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
-      "/health": {
+      "/livez": {
         target: "http://localhost:8080",
         changeOrigin: true,
       },
-      "/ready": {
+      "/readyz": {
         target: "http://localhost:8080",
         changeOrigin: true,
       },
