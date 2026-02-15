@@ -46,13 +46,7 @@ livenessProbe:
   timeoutSeconds: 5
 
 readinessProbe:
-  enabled: true
-  httpGet:
-    path: /readyz
-    port: 8080
-  initialDelaySeconds: 3
-  periodSeconds: 10
-  timeoutSeconds: 5
+  enabled: false
 
 # Pod annotations
 podAnnotations: {}
